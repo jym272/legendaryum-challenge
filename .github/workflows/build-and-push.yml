@@ -1,0 +1,16 @@
+name: build_image
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'src/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+jobs:
+  code_quality_check:
+    uses: ./.github/workflows/code-quality-check.yml
+    secrets: inherit
