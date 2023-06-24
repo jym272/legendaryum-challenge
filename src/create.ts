@@ -7,7 +7,7 @@ import { getServerConfiguration } from '@utils/server';
 
 const parseConfig = (configObject: Partial<ServerConfiguration> = {}) => {
   if (!configObject.rooms || configObject.rooms.length === 0) {
-    throw new Error('config_server.json is not valid');
+    throw new Error('no rooms provided');
   }
   return {
     rooms: configObject.rooms
@@ -43,7 +43,7 @@ export function createApplication(
       return next(new Error('invalid room provided'));
     }
     // join the room
-    await socket.join(room);
+    await socket.join(room); //TODO: testear que el socket se unio al cuarto
     next();
   });
 

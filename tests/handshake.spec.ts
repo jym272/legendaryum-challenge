@@ -2,7 +2,6 @@ import { createServer, Server } from 'http';
 import { AddressInfo } from 'net';
 import { io, Socket } from 'socket.io-client';
 import { createApplication } from '../src/create';
-import { getServerConfiguration } from '@utils/server';
 
 // agregar las features al readme, por ejemplo las sessions del cliente
 // los clientes al conectarse neceistan auth con username y room
@@ -32,7 +31,6 @@ describe('handshake validation', () => {
   let httpServer: Server, socket: Socket;
 
   beforeEach(done => {
-    getServerConfiguration();
     httpServer = createServer();
     createApplication(httpServer, {}, { rooms: ['room1', 'room2', 'room3', 'room4', 'room5', 'room6'] });
     httpServer.listen(() => {
