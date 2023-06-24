@@ -24,7 +24,7 @@ const serverOptions: Partial<ServerOptions> = {
   adapter: createAdapter(redisClient, redisClient.duplicate())
 };
 
-const io = createApplication(httpServer, serverOptions);
+const { io } = createApplication(httpServer, serverOptions);
 
 httpServer.listen(PORT, () => logServerIsRunning(PORT));
 
