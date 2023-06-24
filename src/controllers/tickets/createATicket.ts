@@ -1,7 +1,9 @@
 import { Request, Response } from 'express';
+import { log } from '@utils/logs';
 
 export const createATicketController = () => {
   return (req: Request, res: Response) => {
-    return res.status(200).json({ message: 'Ticket created.' });
+    log(`Worker ${process.pid} working`);
+    res.status(200).json({ message: 'Ticket created.' });
   };
 };

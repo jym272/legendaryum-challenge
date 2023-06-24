@@ -17,12 +17,12 @@ export const initializeSetup = () => {
 };
 
 // otherwise the cookie will not be sent over https connection
-const configureServer = (server: express.Express) => {
-  server.set('trust proxy', true);
-};
+// const configureServer = (server: express.Express) => {
+//   server.set('trust proxy', true);
+// };
 
 export const startSetup = (server: express.Express) => {
-  configureServer(server);
+  // configureServer(server);
   initMiddlewares(server);
   addRoutes(server);
   // server.use(commonController.errorHandler);
