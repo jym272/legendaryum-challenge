@@ -1,7 +1,7 @@
 import { Server as HttpServer } from 'http';
 import { Server, ServerOptions, Socket } from 'socket.io';
 import { DefaultEventsMap } from 'socket.io/dist/typed-events';
-import { ServerConfiguration, SocketData } from '@custom-types/server';
+import { ClientToServerEvents, ServerConfiguration, ServerToClientsEvents, SocketData } from '@custom-types/index';
 import { getServerConfiguration } from '@utils/index';
 import createRoomHandlers from './roomsHandlers';
 export let validRooms: string[] = [];
@@ -13,25 +13,6 @@ const parseConfig = (configObject: Partial<ServerConfiguration> = {}) => {
     rooms: configObject.rooms
   };
 };
-
-interface Error {
-  error: string;
-  // errorDetails?: ValidationErrorItem[];
-}
-
-interface Success<T> {
-  data: T;
-}
-
-export type Response<T> = Error | Success<T>;
-
-export interface ServerToClientsEvents {
-  rooms: (rooms: string[]) => void;
-}
-
-export interface ClientToServerEvents {
-  'room:join': (room: string, callback: (res?: Response<void>) => void) => void;
-}
 
 export function createApplication(
   httpServer: HttpServer,

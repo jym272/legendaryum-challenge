@@ -67,33 +67,4 @@ describe('handshake validation', () => {
       });
     });
   });
-
-  // describe('validate room prop in auth object in handshake', () => {
-  //   it('have a username, should have a room defined to join in', done => {
-  //     socket.auth = { username: 'user' };
-  //     socket.connect();
-  //     socket.on('connect_error', err => {
-  //       expect(err.message).toBe('no room provided');
-  //       done();
-  //     });
-  //   });
-  //   it('have a username, should have a valid room to join in', done => {
-  //     socket.auth = { username: 'user', room: 'invalid_room' };
-  //     // TODO: refactorizar cuando se tenga el objecto json
-  //     socket.connect();
-  //     socket.on('connect_error', err => {
-  //       expect(err.message).toBe('invalid room provided');
-  //       done();
-  //     });
-  //   });
-  //
-  //   it('have a username, have a valid room, connection granted', done => {
-  //     socket.auth = { room: 'room1', username: 'user' };
-  //     socket.connect();
-  //     socket.on('connect', () => {
-  //       expect(socket.connected).toBe(true);
-  //       done();
-  //     });
-  //   });
-  // });
 });

@@ -1,6 +1,6 @@
 import fs from 'fs';
-import { ServerConfiguration } from '@custom-types/server';
 import { getEnvOrFail } from '@utils/env';
+import { ServerConfiguration } from '@custom-types/index';
 
 // TODO: refactorizar en una clase build design pattern
 
