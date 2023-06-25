@@ -23,9 +23,9 @@ export interface SocketData {
   userID: string;
   username: string;
 }
-export interface ServerConfiguration {
-  rooms: string[];
-  cantidadMonedas: number;
+
+interface Room {
+  name: string;
   area: {
     x: {
       max: number;
@@ -40,4 +40,9 @@ export interface ServerConfiguration {
       min: number;
     };
   };
+  amountOfCoins: number;
+}
+
+export interface ServerConfiguration {
+  rooms: Room[];
 }

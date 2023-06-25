@@ -1,18 +1,40 @@
 {
-  "rooms": ["cuarto1", "cuartoNaranja"],
-  "cantidadMonedas": 10,
-  "area": {
-    "x": {
-      "max": 10,
-      "min": 0
+  "rooms": [
+    {
+      "name": "orangeRoom",
+      "area": {
+        "x": {
+          "max": 10,
+          "min": 0
+        },
+        "y": {
+          "max": 10,
+          "min": 0
+        },
+        "z": {
+          "max": 10,
+          "min": 0
+        }
+      },
+      "amountOfCoins": 10
     },
-    "y": {
-      "max": 10,
-      "min": 0
-    },
-    "z": {
-      "max": 10,
-      "min": 0
+    {
+      "name": "blueRoom",
+      "area": {
+        "x": {
+          "max": 0,
+          "min": -10
+        },
+        "y": {
+          "max": 10,
+          "min": 0
+        },
+        "z": {
+          "max": 10,
+          "min": 0
+        }
+      },
+      "amountOfCoins": 10
     }
-  }
+  ]
 }

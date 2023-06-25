@@ -2,18 +2,59 @@ import { createServer, Server } from 'http';
 import { AddressInfo } from 'net';
 import { io, Socket } from 'socket.io-client';
 import { createApplication } from '../src/create';
-import { ClientToServerEvents, ServerToClientsEvents } from '@custom-types/serverTypes';
+import { ClientToServerEvents, ServerConfiguration, ServerToClientsEvents } from '@custom-types/serverTypes';
 import errorsMessages from '@custom-types/errors';
 const { INVALID_ROOM } = errorsMessages;
 describe('client joins a room in the metaverse', () => {
-  let httpServer: Server, socket: Socket<ServerToClientsEvents, ClientToServerEvents>, metaverseRooms: string[];
+  let httpServer: Server,
+    socket: Socket<ServerToClientsEvents, ClientToServerEvents>,
+    metaverseConfiguration: ServerConfiguration;
   beforeAll(() => {
-    metaverseRooms = ['room1', 'room2', 'room3', 'room4', 'room5', 'room6'];
+    metaverseConfiguration = {
+      rooms: [
+        {
+          name: 'orangeRoom',
+          area: {
+            x: {
+              max: 10,
+              min: 0
+            },
+            y: {
+              max: 10,
+              min: 0
+            },
+            z: {
+              max: 10,
+              min: 0
+            }
+          },
+          amountOfCoins: 10
+        },
+        {
+          name: 'blueRoom',
+          area: {
+            x: {
+              max: 0,
+              min: -10
+            },
+            y: {
+              max: 10,
+              min: 0
+            },
+            z: {
+              max: 10,
+              min: 0
+            }
+          },
+          amountOfCoins: 10
+        }
+      ]
+    };
   });
 
   beforeEach(done => {
     httpServer = createServer();
-    createApplication(httpServer, {}, { rooms: metaverseRooms });
+    createApplication(httpServer, {}, metaverseConfiguration);
     httpServer.listen(() => {
       const port = (httpServer.address() as AddressInfo).port;
       socket = io(`http://localhost:${port}`, { autoConnect: false, transports: ['websocket'] });
@@ -41,7 +82,7 @@ describe('client joins a room in the metaverse', () => {
     });
 
     it('if emit event is successful, callback is executed', done => {
-      socket.emit('room:join', 'room1', res => {
+      socket.emit('room:join', 'blueRoom', res => {
         expect(res).toBeUndefined();
         done();
       });
