@@ -2,7 +2,7 @@ import { createServer, Server } from 'http';
 import { AddressInfo } from 'net';
 import { io, Socket } from 'socket.io-client';
 import { createApplication } from '../src/create';
-import { getServerConfiguration } from '@utils/server';
+import { createPartialDone } from '@utils/testUtils';
 
 // agregar las features al readme, por ejemplo las sessions del cliente
 // los clientes al conectarse neceistan auth con username y room
@@ -19,22 +19,15 @@ import { getServerConfiguration } from '@utils/server';
 // los test tiene que tener un docker compose con el server de redis totalmente
 // limpio, serguir testeando e implementando funcionalidades y test
 
-// const createPartialDone = (count: number, done: () => void) => {
-//   let i = 0;
-//   return () => {
-//     if (++i === count) {
-//       done();
-//     }
-//   };
-// };
-
 describe('handshake validation', () => {
-  let httpServer: Server, socket: Socket;
+  let httpServer: Server, socket: Socket, metaverseRooms: string[];
+  beforeAll(() => {
+    metaverseRooms = ['room1', 'room2', 'room3', 'room4', 'room5', 'room6'];
+  });
 
   beforeEach(done => {
-    getServerConfiguration();
     httpServer = createServer();
-    createApplication(httpServer, {}, { rooms: ['room1', 'room2', 'room3', 'room4', 'room5', 'room6'] });
+    createApplication(httpServer, {}, { rooms: metaverseRooms });
     httpServer.listen(() => {
       const port = (httpServer.address() as AddressInfo).port;
       socket = io(`http://localhost:${port}`, { autoConnect: false, transports: ['websocket'] });
@@ -47,41 +40,30 @@ describe('handshake validation', () => {
     socket.disconnect();
   });
 
-  describe('username is first in the middleware in handshake', () => {
-    it('must have a username', done => {
+  describe('username is needed in the handshake, once connected, the server emits the rooms in the metaverse', () => {
+    it('must have a username in auth object', done => {
       socket.connect();
       socket.on('connect_error', err => {
         expect(err.message).toBe('no username provided');
         done();
       });
     });
-  });
-
-  describe('validate room prop in auth object in handshake', () => {
-    it('have a username, should have a room defined to join in', done => {
+    it('successful connection, username provided', done => {
       socket.auth = { username: 'user' };
-      socket.connect();
-      socket.on('connect_error', err => {
-        expect(err.message).toBe('no room provided');
-        done();
-      });
-    });
-    it('have a username, should have a valid room to join in', done => {
-      socket.auth = { username: 'user', room: 'invalid_room' };
-      // TODO: refactorizar cuando se tenga el objecto json
-      socket.connect();
-      socket.on('connect_error', err => {
-        expect(err.message).toBe('invalid room provided');
-        done();
-      });
-    });
-
-    it('have a username, have a valid room, connection granted', done => {
-      socket.auth = { room: 'room1', username: 'user' };
       socket.connect();
       socket.on('connect', () => {
         expect(socket.connected).toBe(true);
         done();
+      });
+    });
+    it('successful connection, the server emits the ev: rooms', done => {
+      const partialDone = createPartialDone(2, done);
+      socket.auth = { username: 'user' };
+      socket.connect();
+      socket.on('connect', partialDone);
+      socket.on('rooms', (rooms: string[]) => {
+        expect(rooms).toEqual(metaverseRooms);
+        partialDone();
       });
     });
   });
