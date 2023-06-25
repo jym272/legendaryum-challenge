@@ -3,6 +3,8 @@ import { AddressInfo } from 'net';
 import { io, Socket } from 'socket.io-client';
 import { createApplication } from '../src/create';
 import { createPartialDone } from '@utils/testUtils';
+import { ServerConfiguration } from '@custom-types/serverTypes';
+import { getNameOfTheRooms } from '@utils/serverUtils';
 
 // agregar las features al readme, por ejemplo las sessions del cliente
 // los clientes al conectarse neceistan auth con username y room
@@ -20,14 +22,53 @@ import { createPartialDone } from '@utils/testUtils';
 // limpio, serguir testeando e implementando funcionalidades y test
 
 describe('handshake validation', () => {
-  let httpServer: Server, socket: Socket, metaverseRooms: string[];
+  let httpServer: Server, socket: Socket, metaverseConfiguration: ServerConfiguration;
   beforeAll(() => {
-    metaverseRooms = ['room1', 'room2', 'room3', 'room4', 'room5', 'room6'];
+    metaverseConfiguration = {
+      rooms: [
+        {
+          name: 'orangeRoom',
+          area: {
+            x: {
+              max: 10,
+              min: 0
+            },
+            y: {
+              max: 10,
+              min: 0
+            },
+            z: {
+              max: 10,
+              min: 0
+            }
+          },
+          amountOfCoins: 10
+        },
+        {
+          name: 'blueRoom',
+          area: {
+            x: {
+              max: 0,
+              min: -10
+            },
+            y: {
+              max: 10,
+              min: 0
+            },
+            z: {
+              max: 10,
+              min: 0
+            }
+          },
+          amountOfCoins: 10
+        }
+      ]
+    };
   });
 
   beforeEach(done => {
     httpServer = createServer();
-    createApplication(httpServer, {}, { rooms: metaverseRooms });
+    createApplication(httpServer, {}, metaverseConfiguration);
     httpServer.listen(() => {
       const port = (httpServer.address() as AddressInfo).port;
       socket = io(`http://localhost:${port}`, { autoConnect: false, transports: ['websocket'] });
@@ -62,7 +103,7 @@ describe('handshake validation', () => {
       socket.connect();
       socket.on('connect', partialDone);
       socket.on('rooms', (rooms: string[]) => {
-        expect(rooms).toEqual(metaverseRooms);
+        expect(rooms).toEqual(getNameOfTheRooms(metaverseConfiguration));
         partialDone();
       });
     });
