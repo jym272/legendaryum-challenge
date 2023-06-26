@@ -5,7 +5,7 @@ import { Server as SocketServer } from 'socket.io';
 import errors from '@custom-types/errors';
 import { ServerConfiguration } from '@custom-types/serverTypes';
 import { getNameOfTheRooms } from '@utils/serverUtils';
-const { CONFIG_FILE_ERROR, MAX_AMOUNT_COINS_ERROR } = errors;
+const { READING_SERVER_CONFIG_FILE_ERROR, MAX_AMOUNT_COINS_ERROR, PARSING_SERVER_CONFIG_FILE_ERROR } = errors;
 
 describe('create application function', () => {
   let httpServer: Server, metaverseConfiguration: ServerConfiguration;
@@ -61,18 +61,24 @@ describe('create application function', () => {
     httpServer.close();
   });
 
-  describe('empty server configuration and invalid server config file', () => {
+  describe('empty server configuration, the configuration is read from a file', () => {
     it('throws an error trying to parse the config server file', () => {
       process.env.CONFIG_SERVER_FILE = 'jest.config.js';
       expect(() => {
         createApplication(httpServer);
-      }).toThrowError(CONFIG_FILE_ERROR);
+      }).toThrowError(new RegExp(PARSING_SERVER_CONFIG_FILE_ERROR));
     });
-    it('throws an error trying to parse the config server file sending empty rooms', () => {
+    it('sending empty rooms, throws an error trying to parse the config server file', () => {
       process.env.CONFIG_SERVER_FILE = 'jest.config.js';
       expect(() => {
         createApplication(httpServer, {}, { rooms: [] });
-      }).toThrowError(CONFIG_FILE_ERROR);
+      }).toThrowError(new RegExp(PARSING_SERVER_CONFIG_FILE_ERROR));
+    });
+    it('throws an error trying to read a file that does not exists', () => {
+      process.env.CONFIG_SERVER_FILE = 'noFile.json';
+      expect(() => {
+        createApplication(httpServer);
+      }).toThrowError(READING_SERVER_CONFIG_FILE_ERROR);
     });
   });
   describe('valid server configuration while creating the application', () => {
