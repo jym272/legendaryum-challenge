@@ -4,6 +4,7 @@ import { io, Socket } from 'socket.io-client';
 import { createApplication } from '../src/create';
 import { ClientToServerEvents, ServerConfiguration, ServerToClientsEvents } from '@custom-types/serverTypes';
 import errorsMessages from '@custom-types/errors';
+import { createPartialDone } from '@utils/testUtils';
 const { INVALID_ROOM } = errorsMessages;
 describe('client joins a room in the metaverse', () => {
   let httpServer: Server,
@@ -35,18 +36,18 @@ describe('client joins a room in the metaverse', () => {
           area: {
             x: {
               max: 0,
-              min: -10
+              min: -2
             },
             y: {
-              max: 10,
+              max: 2,
               min: 0
             },
             z: {
-              max: 10,
+              max: 1,
               min: 0
             }
           },
-          amountOfCoins: 10
+          amountOfCoins: 5
         }
       ]
     };
@@ -81,10 +82,40 @@ describe('client joins a room in the metaverse', () => {
       });
     });
 
-    it('if emit event is successful, callback is executed', done => {
+    it('if emit event is successful, callback is executed without a response object', done => {
       socket.emit('room:join', 'blueRoom', res => {
         expect(res).toBeUndefined();
         done();
+      });
+    });
+  });
+
+  describe('client joins a room, server emits room:joined with all the coins generated', () => {
+    it('server sent coins of the room', done => {
+      const partialDone = createPartialDone(2, done);
+      socket.emit('room:join', 'blueRoom', res => {
+        expect(res).toBeUndefined();
+        partialDone();
+      });
+
+      socket.on('room:joined', coins => {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- because is defined in object
+        const { amountOfCoins } = metaverseConfiguration.rooms.find(room => room.name === 'blueRoom')!;
+        expect(coins.length).toBe(amountOfCoins);
+        expect(coins).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              id: expect.any(Number) as number,
+              position: expect.objectContaining({
+                x: expect.any(Number) as number,
+                y: expect.any(Number) as number,
+                z: expect.any(Number) as number
+              }) as { x: number; y: number; z: number }
+            })
+          ])
+        );
+
+        partialDone();
       });
     });
   });
