@@ -1,8 +1,8 @@
 import fs from 'fs';
-import { getEnvOrFail } from '@utils/env';
+import { getEnvOrFail, serverConfigurationParser } from '@utils/index';
 import { Coin, Room, ServerConfiguration } from '@custom-types/index';
 import errors from '@custom-types/errors';
-const { CONFIG_FILE_ERROR, MAX_AMOUNT_COINS_ERROR } = errors;
+const { READING_SERVER_CONFIG_FILE_ERROR, MAX_AMOUNT_COINS_ERROR, PARSING_SERVER_CONFIG_FILE_ERROR } = errors;
 // TODO: refactorizar en una clase build design pattern
 
 export const getServerConfiguration = (configObject: Partial<ServerConfiguration> = {}) => {
@@ -10,12 +10,18 @@ export const getServerConfiguration = (configObject: Partial<ServerConfiguration
     return configObject as ServerConfiguration;
   }
   const configFile = getEnvOrFail('CONFIG_SERVER_FILE');
+  let configData: string;
   try {
-    const configData = fs.readFileSync(configFile, 'utf-8');
-    return JSON.parse(configData) as ServerConfiguration;
+    configData = fs.readFileSync(configFile, 'utf-8');
   } catch (error) {
-    throw new Error(CONFIG_FILE_ERROR);
+    throw new Error(READING_SERVER_CONFIG_FILE_ERROR);
   }
+  const serverConfiguration = serverConfigurationParser(configData);
+  if (serverConfiguration === undefined) {
+    const error = `${PARSING_SERVER_CONFIG_FILE_ERROR} ${serverConfigurationParser.message ?? ''}`;
+    throw new Error(error);
+  }
+  return serverConfiguration;
 };
 // TODO: maybe generator folder
 export const getNameOfTheRooms = (configuration: ServerConfiguration) => {
