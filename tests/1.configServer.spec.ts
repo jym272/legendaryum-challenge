@@ -5,7 +5,7 @@ import { Server as SocketServer } from 'socket.io';
 import errors from '@custom-types/errors';
 import { ServerConfiguration } from '@custom-types/serverTypes';
 import { getNameOfTheRooms } from '@utils/serverUtils';
-const { CONFIG_FILE_ERROR } = errors;
+const { CONFIG_FILE_ERROR, MAX_AMOUNT_COINS_ERROR } = errors;
 
 describe('create application function', () => {
   let httpServer: Server, metaverseConfiguration: ServerConfiguration;
@@ -79,7 +79,39 @@ describe('create application function', () => {
     it('will retrieve the io SocketServer and the rooms', () => {
       const { io, rooms } = createApplication(httpServer, {}, metaverseConfiguration);
       expect(io).toBeInstanceOf(SocketServer);
-      expect(rooms).toEqual(getNameOfTheRooms(metaverseConfiguration));
+      expect(rooms).toEqual(getNameOfTheRooms(metaverseConfiguration)); //TODO , en el refactor cuando haya base de datos, de seguro cambia
+    });
+  });
+  describe('generate coins', () => {
+    it('fails because of max amount of coins', () => {
+      expect(() => {
+        createApplication(
+          httpServer,
+          {},
+          {
+            rooms: [
+              {
+                name: 'packedRoom',
+                area: {
+                  x: {
+                    max: 5,
+                    min: 0
+                  },
+                  y: {
+                    max: 5,
+                    min: 0
+                  },
+                  z: {
+                    max: 5,
+                    min: 0
+                  }
+                },
+                amountOfCoins: 217
+              }
+            ]
+          }
+        );
+      }).toThrowError(MAX_AMOUNT_COINS_ERROR);
     });
   });
 });
