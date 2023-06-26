@@ -38,6 +38,10 @@ export function createApplication(
     socket.emit('rooms', validRooms);
     socket.on('room:join', joinRoom); //TODO: testear que el socket se unio al cuarto
     socket.on('coin:grab', grabCoin);
+    // listen all events
+    // socket.onAny((event, ...args) => {
+    //   console.log(event, args);
+    // });
   });
   // io.of('/').adapter.on('create-room', room => {
   //   log(`room ${room as string} was created`);
