@@ -2,7 +2,7 @@ import { Server as HttpServer } from 'http';
 import { Server, ServerOptions, Socket } from 'socket.io';
 import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 import { ClientToServerEvents, ServerConfiguration, ServerToClientsEvents, SocketData } from '@custom-types/index';
-import { generateCoins, getNameOfTheRooms, getServerConfiguration } from '@utils/index';
+import { generateCoins, getNameOfTheRooms, getServerConfiguration, log } from '@utils/index';
 import createRoomHandlers from './roomsHandlers';
 export let validRooms: string[] = [];
 export let configuration: ServerConfiguration = { rooms: [] };
@@ -38,14 +38,27 @@ export function createApplication(
     socket.emit('rooms', validRooms);
     socket.on('room:join', joinRoom); //TODO: testear que el socket se unio al cuarto
     socket.on('coin:grab', grabCoin);
+    // listen all events
+    // socket.onAny((event, ...args) => {
+    //   console.log(event, args);
+    // });
+    // socket.on("disconnect", async () => {
+    //   const sockets = await io.in(userId).fetchSockets();
+    //   if (socket.length === 0) {
+    //     // no more active connections for the given user
+    //   }
+    // });
   });
-  // io.of('/').adapter.on('create-room', room => {
-  //   log(`room ${room as string} was created`);
-  // });
-  //
-  // io.of('/').adapter.on('join-room', (room, id) => {
-  //   log(`socket ${id as string} has joined room ${room as string}`);
-  // });
+  io.of('/').adapter.on('create-room', room => {
+    log(`room ${room as string} was created`);
+  });
+
+  io.of('/').adapter.on('join-room', async (room, id) => {
+    log(`socket ${id as string} has joined room ${room as string}`);
+    // return all Socket instances of the main namespace
+    const sockets = await io.fetchSockets();
+    log(sockets); // 1
+  });
 
   return {
     io,

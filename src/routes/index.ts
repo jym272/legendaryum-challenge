@@ -1,7 +1,8 @@
 import express from 'express';
-import { tickets } from '@routes/tickets';
+import { coins } from '@routes/coins';
+import { rooms } from '@routes/rooms';
 
-const routes = [tickets];
+const routes = [coins, rooms];
 
 export const addRoutes = (server: express.Express) => {
   for (const route of routes) {
