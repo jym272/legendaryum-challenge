@@ -69,6 +69,7 @@ export function createApplication(
 ) {
   io = new Server<ClientToServerEvents, ServerToClientsEvents, DefaultEventsMap, SocketData>(httpServer, serverOptions);
 
+  // better name like build TODO
   configuration = getServerConfiguration(serverConfiguration);
   validRooms = getNameOfTheRooms(configuration);
   generateCoins(configuration);
