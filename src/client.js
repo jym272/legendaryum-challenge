@@ -16,6 +16,14 @@ socket.auth = { username: 'jorge' };
 socket.connect();
 socket.on('connect', () => {
   log('connected');
+  //  'room:join': (room: RoomName, callback: (res?: Response<void>) => void) => void;
+  socket.emit('room:join', 'orangeRoom', res => {
+    if (!res) {
+      log('joined room1');
+    } else {
+      log('erro', res);
+    }
+  });
 });
 
 socket.on('disconnect', () => {
