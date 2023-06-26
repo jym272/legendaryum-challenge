@@ -29,3 +29,6 @@ const { io } = createApplication(httpServer, serverOptions);
 httpServer.listen(PORT, () => logServerIsRunning(PORT));
 
 setupWorker(io);
+
+// export io
+// export { io };

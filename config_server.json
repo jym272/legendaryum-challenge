@@ -4,7 +4,7 @@
       "name": "orangeRoom",
       "area": {
         "x": {
-          "max": "asd",
+          "max": 10,
           "min": 0
         },
         "y": {
