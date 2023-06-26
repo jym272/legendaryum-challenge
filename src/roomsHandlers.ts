@@ -2,6 +2,7 @@ import { configuration, validRooms } from './create';
 import { Socket } from 'socket.io';
 import { ClientToServerEvents, Response, ServerToClientsEvents } from '@custom-types/serverTypes';
 import errorsMessages from '@custom-types/errors';
+import { log } from '@utils/logs';
 const { INVALID_ROOM, COIN_NOT_FOUND } = errorsMessages;
 
 export default function () {
@@ -26,6 +27,7 @@ export default function () {
 
     grabCoin: function (coinID: number, callback: (res?: Response<void>) => void) {
       const socket = this as unknown as Socket<ClientToServerEvents, ServerToClientsEvents>;
+      log('ROOMS', socket.rooms);
       const room = Object.keys(socket.rooms)[1];
       const coin = configuration.rooms.find(r => r.name === room)?.coins?.find(c => c.id === coinID);
       if (!coin) {
