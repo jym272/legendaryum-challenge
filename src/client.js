@@ -8,7 +8,7 @@ const log = console.log;
 
 const URL = 'http://localhost:8085';
 const socket = io(URL, { autoConnect: false, transports: ['websocket'] });
-socket.auth = { room: 'cool_room', username: 'jorge' };
+socket.auth = { username: 'jorge' };
 // socket.onAny((event, ...args) => {
 //   console.log(event, args);
 // });
