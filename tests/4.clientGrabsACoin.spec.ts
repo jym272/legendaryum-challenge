@@ -2,13 +2,23 @@ import { createServer, Server } from 'http';
 import { AddressInfo } from 'net';
 import { io, Socket } from 'socket.io-client';
 import { createApplication } from '../src/create';
-import { ClientToServerEvents, Coin, ServerConfiguration, ServerToClientsEvents } from '@custom-types/serverTypes';
+import {
+  ClientToServerEvents,
+  Coin,
+  ServerConfiguration,
+  ServerToClientsEvents,
+  Success
+} from '@custom-types/serverTypes';
 import errorsMessages from '@custom-types/errors';
 import { createPartialDone } from '@utils/testUtils';
+import Redis from 'ioredis';
+import { getRedisClient } from '../src/setup';
 const { COIN_NOT_FOUND, SOCKET_NOT_IN_ROOM, COIN_NOT_AVAILABLE } = errorsMessages;
 
 let metaverseConfiguration: ServerConfiguration;
-beforeAll(() => {
+let redisClient: Redis;
+
+beforeAll(done => {
   metaverseConfiguration = {
     rooms: [
       {
@@ -31,27 +41,58 @@ beforeAll(() => {
       }
     ]
   };
+  redisClient = getRedisClient();
+  // if (redisClient.status === 'close') {
+  //   void redisClient.connect();
+  // }
+  redisClient.on('ready', () => {
+    done();
+  });
+});
+
+// afterAll(() => {
+//   closeRedisClient();
+//   // redisClient.quit();
+//   redisClient.disconnect();
+//   while (redisClient.status === "connected") {
+//     await new Promise(r => setTimeout(r, 200));
+//   }
+// });
+
+// afterAll(async () => {
+//   const redisClient = getRedisClient();
+//   const ok = await redisClient.quit();
+//   if (ok === 'OK') {
+//     console.log('Redis connection closed');
+//   }
+// }, 180000); // 3 minutes
+afterAll(async () => {
+  await redisClient.quit();
 });
 
 describe('one user grabs a coin', () => {
   let httpServer: Server, socket: Socket<ServerToClientsEvents, ClientToServerEvents>, orangeCoins: Coin[];
-
   beforeEach(done => {
     const partialDone = createPartialDone(3, done);
     httpServer = createServer();
-    createApplication(httpServer, {}, metaverseConfiguration);
-    httpServer.listen(() => {
-      const port = (httpServer.address() as AddressInfo).port;
-      socket = io(`http://localhost:${port}`, { autoConnect: false, transports: ['websocket'] });
-      socket.auth = { username: 'user' }; //TODO: validate username in server, it can be differente users!
-      socket.connect();
-      socket.on('connect', partialDone);
-      socket.emit('room:join', 'orangeRoom', () => {
-        partialDone();
-      });
-      socket.on('room:joined', coins => {
-        orangeCoins = coins;
-        partialDone();
+    void redisClient.flushall(partialDone);
+    void createApplication(httpServer, {}, metaverseConfiguration).then(() => {
+      httpServer.listen(() => {
+        const port = (httpServer.address() as AddressInfo).port;
+        socket = io(`http://localhost:${port}`, { autoConnect: false, transports: ['websocket'] });
+        socket.auth = { username: 'user' }; //TODO: validate username in server, it can be differente users!
+        socket.connect();
+        socket.on('connect', partialDone);
+        socket.emit('room:join', 'orangeRoom', res => {
+          expect(res).toBeDefined();
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- because we are testing for it
+          expect('error' in res!).toBe(false);
+          const { data } = res as Success<Coin[]>;
+          expect(data).toBeDefined(); // TODO: raro el expect antes de cada test, deberia ser un test independiente
+          expect(data.length).toBe(20);
+          orangeCoins = data;
+          partialDone();
+        });
       });
     });
   });
@@ -100,38 +141,45 @@ describe('two users in the orangeRoom', () => {
     anotherUserOrangeCoins: Coin[];
 
   beforeEach(done => {
-    const partialDone = createPartialDone(6, done);
+    const partialDone = createPartialDone(5, done);
+    void redisClient.flushall(partialDone);
     httpServer = createServer();
-    createApplication(httpServer, {}, metaverseConfiguration);
-    httpServer.listen(() => {
-      const port = (httpServer.address() as AddressInfo).port;
-      socket = io(`http://localhost:${port}`, {
-        auth: {
-          username: 'user'
-        },
-        transports: ['websocket']
-      });
-      anotherSocket = io(`http://localhost:${port}`, {
-        auth: {
-          username: 'anotherUser' // TODO: validate same usernames!!
-        },
-        transports: ['websocket']
-      });
-      socket.on('connect', partialDone);
-      socket.emit('room:join', 'orangeRoom', () => {
-        partialDone();
-      });
-      socket.on('room:joined', coins => {
-        userOrangeCoins = coins;
-        partialDone();
-      });
-      anotherSocket.on('connect', partialDone);
-      anotherSocket.emit('room:join', 'orangeRoom', () => {
-        partialDone();
-      });
-      anotherSocket.on('room:joined', coins => {
-        anotherUserOrangeCoins = coins;
-        partialDone();
+    void createApplication(httpServer, {}, metaverseConfiguration).then(() => {
+      httpServer.listen(() => {
+        const port = (httpServer.address() as AddressInfo).port;
+        socket = io(`http://localhost:${port}`, {
+          auth: {
+            username: 'user'
+          },
+          transports: ['websocket']
+        });
+        anotherSocket = io(`http://localhost:${port}`, {
+          auth: {
+            username: 'anotherUser' // TODO: validate same usernames!!
+          },
+          transports: ['websocket']
+        });
+        socket.on('connect', partialDone);
+        socket.emit('room:join', 'orangeRoom', res => {
+          expect(res).toBeDefined();
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- because we are testing for it
+          expect('error' in res!).toBe(false);
+          const { data } = res as Success<Coin[]>;
+          expect(data).toBeDefined(); // TODO: raro el expect antes de cada test, deberia ser un test independiente
+          userOrangeCoins = data;
+          partialDone();
+        });
+
+        anotherSocket.on('connect', partialDone);
+        anotherSocket.emit('room:join', 'orangeRoom', res => {
+          expect(res).toBeDefined();
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- because we are testing for it
+          expect('error' in res!).toBe(false);
+          const { data } = res as Success<Coin[]>;
+          expect(data).toBeDefined(); // TODO: raro el expect antes de cada test, deberia ser un test independiente
+          anotherUserOrangeCoins = data;
+          partialDone();
+        });
       });
     });
   });

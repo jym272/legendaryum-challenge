@@ -17,17 +17,24 @@ socket.connect();
 socket.on('connect', () => {
   log('connected');
   //  'room:join': (room: RoomName, callback: (res?: Response<void>) => void) => void;
-  socket.emit('room:join', 'orangeRoom', res => {
-    if (!res) {
-      log('joined room1');
-    } else {
-      log('erro', res);
-    }
-  });
+  // socket.emit('room:join', 'orangeRoom', res => {
+  //   if (res.error) {
+  //     log('room:join orangeRoom', res.error);
+  //   } else {
+  //     log('room:join orangeRoom');
+  //     socket.emit('coin:grab', { coinID: 70, room: 'orangeRoom' }, res => {
+  //       console.log('coin:grab', res);
+  //     });
+  //   }
+  // });
 });
 
 socket.on('disconnect', () => {
   log('disconnected');
+});
+
+socket.on('rooms', rooms => {
+  log('ROOMS', rooms);
 });
 
 socket.on('error', err => {

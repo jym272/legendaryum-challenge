@@ -2,13 +2,15 @@ import axios, { AxiosResponse } from 'axios';
 import { createServer, Server } from 'http';
 import { ServerConfiguration } from '@custom-types/serverTypes';
 import { createApplication } from '../../src/create';
-import { initializeSetup, startSetup } from '../../src/setup';
+import { getRedisClient, initializeSetup, startSetup } from '../../src/setup';
 import { AddressInfo } from 'net';
+import Redis from 'ioredis';
 
 let metaverseConfiguration: ServerConfiguration;
 let httpServer: Server, port: number;
+let redisClient: Redis;
 
-beforeAll(() => {
+beforeAll(done => {
   metaverseConfiguration = {
     rooms: [
       {
@@ -31,21 +33,30 @@ beforeAll(() => {
       }
     ]
   };
+  redisClient = getRedisClient();
+  redisClient.on('ready', () => {
+    done();
+  });
 });
 
 beforeEach(done => {
   const { server } = initializeSetup();
   const expressServer = startSetup(server);
   httpServer = createServer({}, expressServer);
-  createApplication(httpServer, {}, metaverseConfiguration);
-  httpServer.listen(() => {
-    port = (httpServer.address() as AddressInfo).port;
-    done();
+  void createApplication(httpServer, {}, metaverseConfiguration).then(() => {
+    httpServer.listen(() => {
+      port = (httpServer.address() as AddressInfo).port;
+      done();
+    });
   });
 });
 
 afterEach(() => {
   httpServer.close();
+});
+
+afterAll(done => {
+  void redisClient.quit(done);
 });
 
 describe('test the api rest endpoint', () => {

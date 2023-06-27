@@ -1,32 +1,42 @@
 import fs from 'fs';
-import { getEnvOrFail, serverConfigurationParser } from '@utils/index';
+import { getEnvOrFail, log, serverConfigurationParser } from '@utils/index';
 import { Coin, Room, ServerConfiguration } from '@custom-types/index';
 import errors from '@custom-types/errors';
-const { READING_SERVER_CONFIG_FILE_ERROR, MAX_AMOUNT_COINS_ERROR, PARSING_SERVER_CONFIG_FILE_ERROR } = errors;
+const { ROOMS_WITH_SAME_NAME, READING_SERVER_CONFIG_FILE, MAX_AMOUNT_COINS, PARSING_SERVER_CONFIG_FILE } = errors;
 // TODO: refactorizar en una clase build design pattern
 
+const checkUniqueRoomNames = (configuration: ServerConfiguration) => {
+  const names = configuration.rooms.map(room => room.name);
+  log('names', names);
+  const uniqueNames = [...new Set(names)];
+  if (names.length !== uniqueNames.length) {
+    throw new Error(ROOMS_WITH_SAME_NAME);
+  }
+};
 export const getServerConfiguration = (configObject: Partial<ServerConfiguration> = {}) => {
+  let serverConfiguration;
   if (configObject.rooms && configObject.rooms.length > 0) {
-    return configObject as ServerConfiguration;
+    serverConfiguration = configObject as ServerConfiguration;
+  } else {
+    const configFile = getEnvOrFail('CONFIG_SERVER_FILE');
+    let configData: string;
+    try {
+      configData = fs.readFileSync(configFile, 'utf-8');
+    } catch (error) {
+      throw new Error(READING_SERVER_CONFIG_FILE);
+    }
+    serverConfiguration = serverConfigurationParser(configData);
+    if (serverConfiguration === undefined) {
+      const error = `${PARSING_SERVER_CONFIG_FILE} ${serverConfigurationParser.message ?? ''}`;
+      throw new Error(error);
+    }
   }
-  const configFile = getEnvOrFail('CONFIG_SERVER_FILE');
-  let configData: string;
-  try {
-    configData = fs.readFileSync(configFile, 'utf-8');
-  } catch (error) {
-    throw new Error(READING_SERVER_CONFIG_FILE_ERROR);
-  }
-  const serverConfiguration = serverConfigurationParser(configData);
-  if (serverConfiguration === undefined) {
-    const error = `${PARSING_SERVER_CONFIG_FILE_ERROR} ${serverConfigurationParser.message ?? ''}`;
-    throw new Error(error);
-  }
+
+  checkUniqueRoomNames(serverConfiguration);
+
   return serverConfiguration;
 };
 // TODO: maybe generator folder
-export const getNameOfTheRooms = (configuration: ServerConfiguration) => {
-  return configuration.rooms.map(room => room.name);
-};
 // isMaxAmountOfCoinsReached for a room
 const maximumNumberOfPossibleCoins = (room: Room) => {
   const { x, y, z } = room.area;
@@ -37,7 +47,7 @@ export const generateCoins = (configuration: ServerConfiguration) => {
     const { amountOfCoins } = room;
 
     if (maximumNumberOfPossibleCoins(room) < amountOfCoins) {
-      throw new Error(MAX_AMOUNT_COINS_ERROR); //TODO, testear
+      throw new Error(MAX_AMOUNT_COINS);
     }
 
     const coins: Coin[] = [];

@@ -12,7 +12,7 @@
       "@middlewares/*": ["./src/middlewares/*"],
       "@controllers/*": ["./src/controllers/*"],
       "@utils/*": ["./src/utils/*"],
-      "@db/*": ["./src/db/*"],
+      "@redis/*": ["./src/redis/*"],
       "@custom-types/*": ["./src/types/*"],
       "@tests/*": ["./tests/*"],
       "@events/*": ["./src/events/*"],

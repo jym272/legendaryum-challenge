@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
-import { log } from '@utils/logs';
-import { configuration } from '../../create';
+import { getServerStore } from '@redis/index';
 
 export const getRoomsController = () => {
-  return (req: Request, res: Response) => {
-    log(`Worker ${process.pid} working`);
-    res.status(200).json({ rooms: configuration.rooms }); //se prende si no hay rooms??
+  return async (req: Request, res: Response) => {
+    const serverStore = getServerStore();
+    const rooms = await serverStore.getAllRooms();
+    res.status(200).json({ rooms });
   };
 };

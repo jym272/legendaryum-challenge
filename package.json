@@ -13,7 +13,7 @@
     "lint:fix": "eslint --ext .ts src tests --fix",
     "lint-staged": "lint-staged",
     "prepare": "[ \"$NODE_ENV\" = 'production' ] || husky install .husky",
-    "test": "npx jest --runInBand --detectOpenHandles --forceExit",
+    "test": "bash scripts/run-test.sh",
     "test:file": "npx jest --runInBand --detectOpenHandles --forceExit --testNamePattern ",
     "test:watch": "npx jest --watch --runInBand --detectOpenHandles --forceExit",
     "test:report": "npx jest --runInBand --detectOpenHandles --forceExit --coverage",
