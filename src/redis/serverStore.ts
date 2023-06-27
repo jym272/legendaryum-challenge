@@ -37,7 +37,15 @@ class ServerStore {
       const { name, area, amountOfCoins, coins } = room;
 
       // Save the room details
-      pipeline.hmset(`room:${name}`, 'area', JSON.stringify(area), 'amountOfCoins', amountOfCoins.toString());
+      pipeline.hmset(
+        `room:${name}`,
+        'area',
+        JSON.stringify(area),
+        'amountOfCoins',
+        amountOfCoins.toString(),
+        'name',
+        name
+      );
       //Save name of rooms in a set rooms
       pipeline.sadd('rooms', `room:${name}`);
 
@@ -152,12 +160,12 @@ class ServerStore {
     await this.redis.hset(key, 'isAvailable', 'false');
   }
   async getRoom(roomName: RoomName): Promise<Room | null> {
-    const roomString = await this.redis.hgetall(`room:${roomName}`);
-    if (Object.keys(roomString).length) {
+    const room = await this.redis.hgetall(`room:${roomName}`);
+    if (Object.keys(room).length) {
       return {
-        name: roomName,
-        area: JSON.parse(roomString.area) as Room['area'],
-        amountOfCoins: Number(roomString.amountOfCoins)
+        name: room.name,
+        area: JSON.parse(room.area) as Room['area'],
+        amountOfCoins: Number(room.amountOfCoins)
       };
     }
     return null;
