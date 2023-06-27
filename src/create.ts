@@ -2,10 +2,11 @@ import { Server as HttpServer } from 'http';
 import { Server, ServerOptions, Socket } from 'socket.io';
 import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 import { ClientToServerEvents, ServerConfiguration, ServerToClientsEvents, SocketData } from '@custom-types/index';
-import { generateCoins, getNameOfTheRooms, getServerConfiguration } from '@utils/index';
+import { generateCoins, getServerConfiguration, log } from '@utils/index';
 import createRoomHandlers from './roomsHandlers';
-export let validRooms: string[] = [];
-export let configuration: ServerConfiguration = { rooms: [] };
+import { getServerStore } from './redis';
+
+// export let configuration: ServerConfiguration = { rooms: [] };
 
 // function randomId(): string {
 //   return crypto.randomBytes(8).toString('hex');
@@ -62,24 +63,46 @@ const addMiddlewares = (io: ServerIo) => {
   return io;
 };
 
-export function createApplication(
+const setUpServerConfiguration = async (serverConfiguration: Partial<ServerConfiguration> = {}) => {
+  // if there is already a server config in db, thats okey, create a env var to force to rebuild the server configuration
+  // better name like build TODO, only if the env var is provided or if there is not a server configuration in db
+  const configuration = getServerConfiguration(serverConfiguration);
+  const serverStore = getServerStore();
+
+  // not anymore validRooom, the query must be done in redisDB TODO: NOW
+  // // later refactor this funciton in a patter design like a build TOD
+  // await storeConfiguration(configuration);
+
+  // TODO: testear estos flujos
+  const storedConfiguration = await serverStore.getServerConfiguration();
+  if (!storedConfiguration || storedConfiguration !== JSON.stringify(configuration)) {
+    log('New server configuration, saving it to Redis');
+    // TODO: borrar toda la base de datos primero!, realizar un flush!!!
+    await serverStore.saveConfiguration(configuration); // the configuration saved is withoi the coins
+    generateCoins(configuration);
+    await serverStore.saveServerConfiguration(configuration); // it will save coins also, order is important
+    return;
+  }
+  log('Server configuration already stored in Redis');
+};
+
+export async function createApplication(
   httpServer: HttpServer,
   serverOptions: Partial<ServerOptions> = {},
   serverConfiguration: Partial<ServerConfiguration> = {}
 ) {
   io = new Server<ClientToServerEvents, ServerToClientsEvents, DefaultEventsMap, SocketData>(httpServer, serverOptions);
 
-  // better name like build TODO
-  configuration = getServerConfiguration(serverConfiguration);
-  validRooms = getNameOfTheRooms(configuration);
-  generateCoins(configuration);
+  // validRooms = getNameOfTheRooms(configuration);
+  await setUpServerConfiguration(serverConfiguration);
+
   addMiddlewares(io);
-  // TODO: generar las monedas en cada cuarto!!, por ahora todo en memoria, luego en REDIS
 
   const { joinRoom, grabCoin } = createRoomHandlers();
 
-  io.on('connection', socket => {
-    socket.emit('rooms', validRooms);
+  io.on('connection', async socket => {
+    const rooms = await getServerStore().getRoomNames();
+    socket.emit('rooms', rooms);
     socket.on('room:join', joinRoom); //TODO: testear que el socket se unio al cuarto
     socket.on('coin:grab', grabCoin);
     // listen all events
@@ -147,7 +170,6 @@ export function createApplication(
   // });
 
   return {
-    io,
-    rooms: validRooms
+    io
   };
 }

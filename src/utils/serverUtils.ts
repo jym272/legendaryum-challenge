@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { getEnvOrFail, serverConfigurationParser } from '@utils/index';
+import { getEnvOrFail, log, serverConfigurationParser } from '@utils/index';
 import { Coin, Room, ServerConfiguration } from '@custom-types/index';
 import errors from '@custom-types/errors';
 const { ROOMS_WITH_SAME_NAME, READING_SERVER_CONFIG_FILE, MAX_AMOUNT_COINS, PARSING_SERVER_CONFIG_FILE } = errors;
@@ -7,6 +7,7 @@ const { ROOMS_WITH_SAME_NAME, READING_SERVER_CONFIG_FILE, MAX_AMOUNT_COINS, PARS
 
 const checkUniqueRoomNames = (configuration: ServerConfiguration) => {
   const names = configuration.rooms.map(room => room.name);
+  log('names', names);
   const uniqueNames = [...new Set(names)];
   if (names.length !== uniqueNames.length) {
     throw new Error(ROOMS_WITH_SAME_NAME);
@@ -16,7 +17,6 @@ export const getServerConfiguration = (configObject: Partial<ServerConfiguration
   let serverConfiguration;
   if (configObject.rooms && configObject.rooms.length > 0) {
     serverConfiguration = configObject as ServerConfiguration;
-    // return configObject as ServerConfiguration;
   } else {
     const configFile = getEnvOrFail('CONFIG_SERVER_FILE');
     let configData: string;
@@ -37,9 +37,6 @@ export const getServerConfiguration = (configObject: Partial<ServerConfiguration
   return serverConfiguration;
 };
 // TODO: maybe generator folder
-export const getNameOfTheRooms = (configuration: ServerConfiguration) => {
-  return configuration.rooms.map(room => room.name);
-};
 // isMaxAmountOfCoinsReached for a room
 const maximumNumberOfPossibleCoins = (room: Room) => {
   const { x, y, z } = room.area;
@@ -50,7 +47,7 @@ export const generateCoins = (configuration: ServerConfiguration) => {
     const { amountOfCoins } = room;
 
     if (maximumNumberOfPossibleCoins(room) < amountOfCoins) {
-      throw new Error(MAX_AMOUNT_COINS); //TODO, testear
+      throw new Error(MAX_AMOUNT_COINS);
     }
 
     const coins: Coin[] = [];

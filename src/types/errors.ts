@@ -6,7 +6,8 @@ const errorsMessages = {
   INVALID_ROOM: 'invalid room provided',
   MAX_AMOUNT_COINS: 'the amount of coins is greater than the maximum number of possible coins',
   SOCKET_NOT_IN_ROOM: 'socket has not joined that room',
-  ROOMS_WITH_SAME_NAME: 'there are rooms with the same name'
+  ROOMS_WITH_SAME_NAME: 'there are rooms with the same name',
+  ROOM_DOESNT_HAVE_COINS: "Room doesn't have coins"
 };
 
 export default errorsMessages;

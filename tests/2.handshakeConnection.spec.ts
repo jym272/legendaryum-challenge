@@ -4,7 +4,8 @@ import { io, Socket } from 'socket.io-client';
 import { createApplication } from '../src/create';
 import { createPartialDone } from '@utils/testUtils';
 import { ServerConfiguration } from '@custom-types/serverTypes';
-import { getNameOfTheRooms } from '@utils/serverUtils';
+import Redis from 'ioredis';
+import { getRedisClient } from '../src/setup';
 
 // agregar las features al readme, por ejemplo las sessions del cliente
 // los clientes al conectarse neceistan auth con username y room
@@ -22,8 +23,8 @@ import { getNameOfTheRooms } from '@utils/serverUtils';
 // limpio, serguir testeando e implementando funcionalidades y test
 
 describe('handshake validation', () => {
-  let httpServer: Server, socket: Socket, metaverseConfiguration: ServerConfiguration;
-  beforeAll(() => {
+  let httpServer: Server, socket: Socket, metaverseConfiguration: ServerConfiguration, redisClient: Redis;
+  beforeAll(done => {
     metaverseConfiguration = {
       rooms: [
         {
@@ -64,21 +65,36 @@ describe('handshake validation', () => {
         }
       ]
     };
+    redisClient = getRedisClient();
+    // if (redisClient.status === 'close') {
+    //   void redisClient.connect();
+    // }
+    redisClient.on('ready', () => {
+      done();
+    });
   });
 
   beforeEach(done => {
+    const partialDone = createPartialDone(2, done);
     httpServer = createServer();
-    createApplication(httpServer, {}, metaverseConfiguration);
-    httpServer.listen(() => {
-      const port = (httpServer.address() as AddressInfo).port;
-      socket = io(`http://localhost:${port}`, { autoConnect: false, transports: ['websocket'] });
-      done();
+    void redisClient.flushall(partialDone);
+
+    void createApplication(httpServer, {}, metaverseConfiguration).then(() => {
+      httpServer.listen(() => {
+        const port = (httpServer.address() as AddressInfo).port;
+        socket = io(`http://localhost:${port}`, { autoConnect: false, transports: ['websocket'] });
+        partialDone();
+      });
     });
   });
 
   afterEach(() => {
     httpServer.close();
     socket.disconnect();
+  });
+
+  afterAll(done => {
+    void redisClient.quit(done);
   });
 
   describe('username is needed in the handshake, once connected, the server emits the rooms in the metaverse', () => {
@@ -103,7 +119,7 @@ describe('handshake validation', () => {
       socket.connect();
       socket.on('connect', partialDone);
       socket.on('rooms', (rooms: string[]) => {
-        expect(rooms).toEqual(getNameOfTheRooms(metaverseConfiguration));
+        expect(rooms).toEqual(metaverseConfiguration.rooms.map(room => room.name));
         partialDone();
       });
     });
