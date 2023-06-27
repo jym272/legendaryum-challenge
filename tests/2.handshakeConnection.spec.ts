@@ -119,7 +119,7 @@ describe('handshake validation', () => {
       socket.connect();
       socket.on('connect', partialDone);
       socket.on('rooms', (rooms: string[]) => {
-        expect(rooms).toEqual(metaverseConfiguration.rooms.map(room => room.name));
+        expect(rooms.sort()).toStrictEqual(metaverseConfiguration.rooms.map(room => room.name).sort());
         partialDone();
       });
     });
