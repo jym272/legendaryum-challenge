@@ -107,6 +107,22 @@ describe('client joins a room in the metaverse', () => {
       });
     });
 
+    it('client join successfully to a two rooms', done => {
+      const partialDone = createPartialDone(2, done);
+      socket.emit('room:join', 'orangeRoom', res => {
+        expect(res).toBeDefined();
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- because we are testing for it
+        expect('error' in res!).toBe(false);
+        partialDone();
+      });
+      socket.emit('room:join', 'blueRoom', res => {
+        expect(res).toBeDefined();
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- because we are testing for it
+        expect('error' in res!).toBe(false);
+        partialDone();
+      });
+    });
+
     it('if emit event is successful, callback is executed sending all coins', done => {
       socket.emit('room:join', 'blueRoom', res => {
         expect(res).toBeDefined();

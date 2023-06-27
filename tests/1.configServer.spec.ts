@@ -186,6 +186,6 @@ describe('create application function, redis server initialized', () => {
           ]
         }
       );
-    }).rejects.toThrowError(new RegExp(MAX_AMOUNT_COINS));
+    }).rejects.toThrowError(MAX_AMOUNT_COINS);
   });
 });
