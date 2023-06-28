@@ -1,4 +1,5 @@
 import Redis from 'ioredis';
+import { getRedisClient } from '../setup';
 
 interface Session {
   userID: string;
@@ -12,7 +13,7 @@ abstract class SessionStore {
   abstract findAllSessions(): Promise<Session[]>;
 }
 
-class InMemorySessionStore extends SessionStore {
+/*class InMemorySessionStore extends SessionStore {
   private sessions: Map<string, Session>;
 
   constructor() {
@@ -31,7 +32,7 @@ class InMemorySessionStore extends SessionStore {
   findAllSessions(): Promise<Session[]> {
     return Promise.resolve([...this.sessions.values()]);
   }
-}
+}*/
 
 const SESSION_TTL = 24 * 60 * 60;
 
@@ -81,4 +82,11 @@ class RedisSessionStore extends SessionStore {
   }
 }
 
-export { InMemorySessionStore, RedisSessionStore };
+let sessionStore: SessionStore | null = null;
+
+export const getSessionStore = () => {
+  if (!sessionStore) {
+    sessionStore = new RedisSessionStore(getRedisClient());
+  }
+  return sessionStore;
+};

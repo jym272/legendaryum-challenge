@@ -8,6 +8,8 @@ interface RemoteSocketData {
   rooms: string[];
 }
 
+/// /api/sockets
+
 export const getSocketsController = () => {
   return async (req: Request, res: Response) => {
     const io = getSocketServer();
