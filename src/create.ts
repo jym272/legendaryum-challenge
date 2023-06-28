@@ -22,8 +22,7 @@ export const getSocketServer = () => {
   }
   return io;
 };
-// const redisClient = new Redis(6767, 'localhost');
-// const sessionStore = new RedisSessionStore(redisClient);
+
 const addMiddlewares = (io: ServerIo) => {
   io.use((socket: Socket, next) => {
     const username = socket.handshake.auth.username as string | undefined;
@@ -33,32 +32,29 @@ const addMiddlewares = (io: ServerIo) => {
     next();
   });
 
-  /*
-  io.use(async (socket, next) => {
-    //sessionID is in the client browser, or something
-    // TODO: con sessionId podemos reconectarlo en los cuartos en los cuales estaba conectada
-    const sessionID = socket.handshake.auth.sessionID as string | undefined;
-    if (sessionID) {
-      const session = await sessionStore.findSession(sessionID);
-      if (session) {
-        socket.data.sessionID = sessionID;
-        socket.data.userID = session.userID;
-        socket.data.username = session.username;
-        next();
-        return;
-      }
-    }
-    const username = socket.handshake.auth.username as string | undefined;
-
-    if (!username) {
-      return next(new Error('no username provided'));
-    }
-    socket.data.sessionID = randomId();
-    socket.data.userID = randomId();
-    socket.data.username = username;
-    next();
-  });
-*/
+  // io.use(async (socket, next) => {
+  //   //sessionID is in the client browser, or something
+  //   // TODO: con sessionId podemos reconectarlo en los cuartos en los cuales estaba conectada
+  //   const sessionID = socket.handshake.auth.sessionID as string | undefined;
+  //   if (sessionID) {
+  //     const session = await getSessionStore().findSession(sessionID);
+  //     if (session) {
+  //       socket.data.sessionID = sessionID;
+  //       socket.data.userID = session.userID;
+  //       socket.data.username = session.username;
+  //       return next();
+  //     }
+  //   }
+  //   const username = socket.handshake.auth.username as string | undefined;
+  //
+  //   if (!username) {
+  //     return next(new Error('no username provided'));
+  //   }
+  //   socket.data.sessionID = randomId();
+  //   socket.data.userID = randomId();
+  //   socket.data.username = username;
+  //   next();
+  // });
 
   return io;
 };

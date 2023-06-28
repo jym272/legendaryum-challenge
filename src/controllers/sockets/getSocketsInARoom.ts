@@ -8,6 +8,7 @@ interface RemoteSocketData {
   rooms: string[];
 }
 
+// /api/room/:room/sockets
 export const getSocketsInARoomController = () => {
   ///api/room/:room/sockets
   return async (req: Request, res: Response) => {

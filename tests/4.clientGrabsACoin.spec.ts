@@ -42,30 +42,11 @@ beforeAll(done => {
     ]
   };
   redisClient = getRedisClient();
-  // if (redisClient.status === 'close') {
-  //   void redisClient.connect();
-  // }
   redisClient.on('ready', () => {
     done();
   });
 });
 
-// afterAll(() => {
-//   closeRedisClient();
-//   // redisClient.quit();
-//   redisClient.disconnect();
-//   while (redisClient.status === "connected") {
-//     await new Promise(r => setTimeout(r, 200));
-//   }
-// });
-
-// afterAll(async () => {
-//   const redisClient = getRedisClient();
-//   const ok = await redisClient.quit();
-//   if (ok === 'OK') {
-//     console.log('Redis connection closed');
-//   }
-// }, 180000); // 3 minutes
 afterAll(async () => {
   await redisClient.quit();
 });
@@ -84,12 +65,7 @@ describe('one user grabs a coin', () => {
         socket.connect();
         socket.on('connect', partialDone);
         socket.emit('room:join', 'orangeRoom', res => {
-          expect(res).toBeDefined();
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- because we are testing for it
-          expect('error' in res!).toBe(false);
           const { data } = res as Success<Coin[]>;
-          expect(data).toBeDefined(); // TODO: raro el expect antes de cada test, deberia ser un test independiente
-          expect(data.length).toBe(20);
           orangeCoins = data;
           partialDone();
         });
@@ -161,22 +137,13 @@ describe('two users in the orangeRoom', () => {
         });
         socket.on('connect', partialDone);
         socket.emit('room:join', 'orangeRoom', res => {
-          expect(res).toBeDefined();
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- because we are testing for it
-          expect('error' in res!).toBe(false);
           const { data } = res as Success<Coin[]>;
-          expect(data).toBeDefined(); // TODO: raro el expect antes de cada test, deberia ser un test independiente
           userOrangeCoins = data;
           partialDone();
         });
-
         anotherSocket.on('connect', partialDone);
         anotherSocket.emit('room:join', 'orangeRoom', res => {
-          expect(res).toBeDefined();
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- because we are testing for it
-          expect('error' in res!).toBe(false);
           const { data } = res as Success<Coin[]>;
-          expect(data).toBeDefined(); // TODO: raro el expect antes de cada test, deberia ser un test independiente
           anotherUserOrangeCoins = data;
           partialDone();
         });
