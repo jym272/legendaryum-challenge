@@ -45,7 +45,11 @@ socket.on('connect_error', err => {
   log(`connect_error due to ${err.message}`);
 });
 
-//wait 5s
-// setTimeout(() => {
-//   socket.disconnect();
-// }, 5000);
+// wait 5s
+setTimeout(() => {
+  socket.disconnect();
+}, 2000);
+
+setTimeout(() => {
+  // socket.disconnect();
+}, 5000);

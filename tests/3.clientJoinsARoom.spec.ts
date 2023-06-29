@@ -9,7 +9,7 @@ import {
   ServerConfiguration,
   ServerToClientsEvents,
   Success
-} from '@custom-types/serverTypes';
+} from '@custom-types/index';
 import errorsMessages from '@custom-types/errors';
 import Redis from 'ioredis';
 import { createPartialDone } from '@utils/testUtils';

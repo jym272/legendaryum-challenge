@@ -2,13 +2,7 @@ import { createServer, Server } from 'http';
 import { AddressInfo } from 'net';
 import { io, Socket } from 'socket.io-client';
 import { createApplication } from '../src/create';
-import {
-  ClientToServerEvents,
-  Coin,
-  ServerConfiguration,
-  ServerToClientsEvents,
-  Success
-} from '@custom-types/serverTypes';
+import { ClientToServerEvents, Coin, ServerConfiguration, ServerToClientsEvents, Success } from '@custom-types/index';
 import errorsMessages from '@custom-types/errors';
 import { createPartialDone } from '@utils/testUtils';
 import Redis from 'ioredis';

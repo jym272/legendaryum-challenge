@@ -1,33 +1,34 @@
 import { Socket } from 'socket.io';
-import { ClientToServerEvents, Coin, Response, RoomName, ServerToClientsEvents } from '@custom-types/serverTypes';
+import { ClientToServerEvents, Coin, Response, RoomName, ServerToClientsEvents, SocketData } from '@custom-types/index';
 import errorsMessages from '@custom-types/errors';
-import { getServerStore } from './redis';
+import { getServerStore, getSessionStore } from './redis';
 import { log } from '@utils/logs';
+import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 const { ROOM_DOESNT_HAVE_COINS, SOCKET_NOT_IN_ROOM, COIN_NOT_AVAILABLE, INVALID_ROOM, COIN_NOT_FOUND } = errorsMessages;
 
+type SocketIO = Socket<ClientToServerEvents, ServerToClientsEvents, DefaultEventsMap, SocketData>;
 export default function () {
   return {
     joinRoom: async function (room: string, callback: (res?: Response<Coin[]>) => void) {
-      const socket = this as unknown as Socket<ClientToServerEvents, ServerToClientsEvents>;
+      const socket = this as unknown as SocketIO;
       const serverStore = getServerStore();
+      const sessionStore = getSessionStore();
 
       const rooms = await serverStore.getRoomNames();
 
       if (!rooms.includes(room)) {
         return callback({ error: INVALID_ROOM });
       }
-      await socket.join(room);
+      await socket.join(room); // TODO: testear si me queiero unir dos veces al mismo cuarto
 
       const coins = await serverStore.getCoinsByRoomName(room);
       if (coins.length === 0) {
-        return callback({ error: ROOM_DOESNT_HAVE_COINS }); // TODO: no testeado, de seguro con redis cambia
+        return callback({ error: ROOM_DOESNT_HAVE_COINS }); // TODO: no testeado, de seguro con redis cambia algo, limite al menos 1 coin??
       }
+      await sessionStore.addRoomToSession(socket.data.sessionID, room);
       callback({
         data: coins
       });
-
-      // TODO: maybe a better name is needed, for the event, like coins:added
-      // socket.emit('room:joined', coins);
     },
 
     grabCoin: async function (

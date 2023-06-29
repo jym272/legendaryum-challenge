@@ -9,7 +9,8 @@ const errorsMessages = {
   SOCKET_NOT_IN_ROOM: 'socket has not joined that room',
   ROOMS_WITH_SAME_NAME: 'there are rooms with the same name',
   ROOM_DOESNT_HAVE_COINS: "Room doesn't have coins",
-  ROOM_NOT_FOUND: 'room not found'
+  ROOM_NOT_FOUND: 'room not found',
+  NO_USERNAME_PROVIDED: 'no username provided'
 };
 
 export default errorsMessages;

@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { getEnvOrFail, log, serverConfigurationParser } from '@utils/index';
+import { getEnvOrFail, serverConfigurationParser } from '@utils/index';
 import { Coin, Room, ServerConfiguration } from '@custom-types/index';
 import errors from '@custom-types/errors';
 const { ROOMS_WITH_SAME_NAME, READING_SERVER_CONFIG_FILE, MAX_AMOUNT_COINS, PARSING_SERVER_CONFIG_FILE } = errors;
@@ -7,7 +7,6 @@ const { ROOMS_WITH_SAME_NAME, READING_SERVER_CONFIG_FILE, MAX_AMOUNT_COINS, PARS
 
 const checkUniqueRoomNames = (configuration: ServerConfiguration) => {
   const names = configuration.rooms.map(room => room.name);
-  log('names', names);
   const uniqueNames = [...new Set(names)];
   if (names.length !== uniqueNames.length) {
     throw new Error(ROOMS_WITH_SAME_NAME);
