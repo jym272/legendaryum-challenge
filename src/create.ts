@@ -105,22 +105,22 @@ export async function createApplication(
       sessionID: socket.data.sessionID,
       userID: socket.data.userID
     });
-    // 1. emito los cuartos disponibles
-    const rooms = await getServerStore().getAllRooms();
 
+    const rooms = await getServerStore().getAllRooms();
     socket.emit('rooms', rooms);
 
-    // TODO: test restore  Sessions NEXT
-
     const restoreSessionRooms = await sessionStore.getRoomsWithCoins(socket.data.sessionID);
-    restoreSessionRooms.length > 0 && socket.emit('session:rejoinRooms', restoreSessionRooms); // TODO: testear, deberia permitir []
+    if (restoreSessionRooms.length > 0) {
+      restoreSessionRooms.forEach(({ name }) => {
+        void socket.join(name);
+      });
+      socket.emit('session:rejoinRooms', restoreSessionRooms);
+    }
 
-    // notify users upon disconnection
     socket.on('disconnect', async () => {
       const matchingSockets = await io?.in(socket.data.userID).fetchSockets();
       const isDisconnected = matchingSockets !== undefined && matchingSockets.length === 0;
       if (isDisconnected) {
-        // update the connection status of the session
         await sessionStore.saveSession(socket.data.sessionID, {
           userID: socket.data.userID,
           username: socket.data.username,

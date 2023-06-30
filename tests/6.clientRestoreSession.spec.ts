@@ -3,7 +3,13 @@ import { AddressInfo } from 'net';
 import { io, Socket } from 'socket.io-client';
 import { createApplication } from '../src/create';
 import { createPartialDone } from '@utils/testUtils';
-import { ClientToServerEvents, ServerConfiguration, ServerToClientsEvents, Success } from '@custom-types/serverTypes';
+import {
+  ClientToServerEvents,
+  ServerConfiguration,
+  ServerIo,
+  ServerToClientsEvents,
+  Success
+} from '@custom-types/serverTypes';
 import Redis from 'ioredis';
 import { getRedisClient } from '../src/setup';
 import { Coin } from '@custom-types/appTypes';
@@ -66,7 +72,8 @@ describe('client join a room, get the coins', () => {
     socket2: Socket<ServerToClientsEvents, ClientToServerEvents>,
     port: number,
     orangeRoomCoins: Coin[],
-    blueRoomCoins: Coin[];
+    blueRoomCoins: Coin[],
+    socketServer: ServerIo;
 
   const sessionCredentials = {
     username: 'juana',
@@ -79,7 +86,8 @@ describe('client join a room, get the coins', () => {
     httpServer = createServer();
     void redisClient.flushall(partialDone);
 
-    void createApplication(httpServer, {}, metaverseConfiguration).then(() => {
+    void createApplication(httpServer, {}, metaverseConfiguration).then(({ io: serverIo }) => {
+      socketServer = serverIo;
       httpServer.listen(() => {
         port = (httpServer.address() as AddressInfo).port;
         socket = io(`http://localhost:${port}`, {
@@ -107,6 +115,16 @@ describe('client join a room, get the coins', () => {
     socket2.disconnect();
     httpServer.close();
   });
+
+  const getRemoteSockets = async () => {
+    return (await socketServer.fetchSockets()).map(socket => {
+      return {
+        id: socket.id,
+        data: socket.data,
+        rooms: [...socket.rooms]
+      };
+    });
+  };
 
   // client join a room, second sokcket from same client(sessionID) restore session rooms
 
@@ -151,7 +169,14 @@ describe('client join a room, get the coins', () => {
         const blueRoom = rooms.find(room => room.name === 'blueRoom');
         expect(blueRoom?.coins.length).toBe(blueRoomCoins.length);
         expect(blueRoom?.coins.sort((a, b) => a.id - b.id)).toEqual(blueRoomCoins.sort((a, b) => a.id - b.id));
-        partialDone();
+
+        void getRemoteSockets().then(remoteSockets => {
+          const socket_2 = remoteSockets.find(socket => socket.id === socket2.id);
+          expect(socket_2?.rooms.sort()).toEqual(
+            ['blueRoom', socket2.id, 'orangeRoom', sessionCredentials.userID].sort()
+          );
+          partialDone();
+        });
       });
     });
   });
