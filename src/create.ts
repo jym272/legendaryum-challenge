@@ -1,7 +1,13 @@
 import { Server as HttpServer } from 'http';
 import { Server, ServerOptions } from 'socket.io';
 import { DefaultEventsMap } from 'socket.io/dist/typed-events';
-import { ClientToServerEvents, ServerConfiguration, ServerToClientsEvents, SocketData } from '@custom-types/index';
+import {
+  ClientToServerEvents,
+  ServerConfiguration,
+  ServerIo,
+  ServerToClientsEvents,
+  SocketData
+} from '@custom-types/index';
 import { generateCoins, getServerConfiguration, log } from '@utils/index';
 import createRoomHandlers from './roomsHandlers';
 import { getServerStore, getSessionStore } from './redis';
@@ -12,8 +18,6 @@ const { NO_USERNAME_PROVIDED } = errors;
 function randomId(): string {
   return crypto.randomBytes(8).toString('hex');
 }
-
-type ServerIo = Server<ClientToServerEvents, ServerToClientsEvents, DefaultEventsMap, SocketData>;
 
 let io: ServerIo | undefined;
 
@@ -103,8 +107,11 @@ export async function createApplication(
 
     socket.emit('rooms', rooms);
 
-    // join the "userID" room, TODO: why?
+    // join the "userID" room, TODO: why? -> cada socket esta conectado al usaurio que es unico
+    // coda socket individual esta conectado a su socketID y a un userID
     await socket.join(socket.data.userID);
+
+    // TODO: test restore  Sessions NEXT
 
     const restoreSessionRooms = await sessionStore.getRoomsWithCoins(socket.data.sessionID);
     // en esta vez le tengo que enviar un room lleno de monedas
@@ -143,6 +150,7 @@ export async function createApplication(
     socket.on('disconnect', async () => {
       log('HOLIIIS');
       const matchingSockets = await io?.in(socket.data.userID).fetchSockets();
+      log('matching socket lenght', matchingSockets!.length);
       const isDisconnected = matchingSockets !== undefined && matchingSockets.length === 0;
       if (isDisconnected) {
         // update the connection status of the session

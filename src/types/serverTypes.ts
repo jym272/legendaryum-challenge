@@ -1,4 +1,6 @@
 import { Coin, Room, RoomWithRequiredCoins } from '@custom-types/appTypes';
+import { Server } from 'socket.io';
+import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 
 export interface Error {
   error: string;
@@ -39,3 +41,11 @@ export interface ClientToServerEvents {
 export interface ServerConfiguration {
   rooms: Room[];
 }
+
+export interface RemoteSocketData {
+  id: string;
+  data: SocketData;
+  rooms: string[];
+}
+
+export type ServerIo = Server<ClientToServerEvents, ServerToClientsEvents, DefaultEventsMap, SocketData>;

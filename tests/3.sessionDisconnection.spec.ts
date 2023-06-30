@@ -72,7 +72,7 @@ describe('disconnection to the server', () => {
         socket = io(`http://localhost:${port}`, { autoConnect: false, transports: ['polling'] });
         socket.auth = { username: 'user' };
         socket.connect();
-        socket.on('connect', done);
+        socket.on('connect', partialDone);
       });
     });
   });
