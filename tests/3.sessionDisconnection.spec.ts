@@ -83,7 +83,11 @@ describe('disconnection to the server', () => {
   });
 
   afterAll(done => {
-    void redisClient.quit(done);
+    void redisClient.quit((err, res) => {
+      if (res === 'OK') {
+        done();
+      }
+    });
   });
 
   let sessionId: string;

@@ -57,7 +57,11 @@ beforeAll(done => {
 });
 
 afterAll(done => {
-  void redisClient.quit(done);
+  void redisClient.quit((err, res) => {
+    if (res === 'OK') {
+      done();
+    }
+  });
 });
 
 describe('second socket from the same client connected', () => {

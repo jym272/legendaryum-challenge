@@ -235,7 +235,7 @@ class ServerStore {
 
     return data
       .map(([error, room]) =>
-        error
+        error || Object.keys(room).length === 0
           ? undefined
           : {
               name: room.name,

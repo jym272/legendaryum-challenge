@@ -79,7 +79,11 @@ afterEach(() => {
 });
 
 afterAll(done => {
-  void redisClient.quit(done);
+  void redisClient.quit((err, res) => {
+    if (res === 'OK') {
+      done();
+    }
+  });
 });
 
 describe('/api/room/:room endpoint GET', () => {

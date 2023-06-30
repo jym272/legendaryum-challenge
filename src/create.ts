@@ -67,11 +67,11 @@ const setUpServerConfiguration = async (serverConfiguration: Partial<ServerConfi
   // TODO: testear estos flujos
   const storedConfiguration = await serverStore.getServerConfiguration();
   if (!storedConfiguration || storedConfiguration !== JSON.stringify(configuration)) {
-    // log('New server configuration, saving it to Redis');
     // TODO: borrar toda la base de datos primero!, realizar un flush!!!
     await serverStore.saveConfiguration(configuration); // the configuration saved is withoi the coins
     generateCoins(configuration);
     await serverStore.saveServerConfiguration(configuration); // it will save coins also, order is important
+    // log('New server configuration, saving it to Redis');
     return;
   }
   log('Server configuration already stored in Redis');

@@ -64,7 +64,11 @@ beforeAll(done => {
 });
 
 afterAll(done => {
-  void redisClient.quit(done);
+  void redisClient.quit((err, res) => {
+    if (res === 'OK') {
+      done();
+    }
+  });
 });
 describe('client join a room, get the coins', () => {
   let httpServer: Server,
@@ -92,7 +96,7 @@ describe('client join a room, get the coins', () => {
         port = (httpServer.address() as AddressInfo).port;
         socket = io(`http://localhost:${port}`, {
           auth: { username: sessionCredentials.username },
-          transports: ['polling']
+          transports: ['websocket']
         });
         socket.on('session', ({ sessionID, userID }) => {
           sessionCredentials.sessionID = sessionID;
@@ -110,10 +114,14 @@ describe('client join a room, get the coins', () => {
     });
   });
 
-  afterEach(() => {
+  afterEach(done => {
     socket.disconnect();
     socket2.disconnect();
-    httpServer.close();
+    socketServer.close(err => {
+      if (err === undefined) {
+        done();
+      }
+    });
   });
 
   const getRemoteSockets = async () => {
@@ -126,14 +134,12 @@ describe('client join a room, get the coins', () => {
     });
   };
 
-  // client join a room, second sokcket from same client(sessionID) restore session rooms
-
   it('second socket is connected from the same client and the sessions room is restored for that socket', done => {
     const partialDone = createPartialDone(3, done);
 
     socket2 = io(`http://localhost:${port}`, {
       auth: { username: sessionCredentials.username, sessionID: sessionCredentials.sessionID },
-      transports: ['polling']
+      transports: ['websocket']
     });
     socket2.on('connect', partialDone);
     socket2.on('session', partialDone);
@@ -156,7 +162,7 @@ describe('client join a room, get the coins', () => {
 
       socket2 = io(`http://localhost:${port}`, {
         auth: { username: sessionCredentials.username, sessionID: sessionCredentials.sessionID },
-        transports: ['polling']
+        transports: ['websocket']
       });
       socket2.on('connect', partialDone);
       socket2.on('session', partialDone);
