@@ -2,7 +2,6 @@ import { Socket } from 'socket.io';
 import { ClientToServerEvents, Coin, Response, RoomName, ServerToClientsEvents, SocketData } from '@custom-types/index';
 import errorsMessages from '@custom-types/errors';
 import { getServerStore, getSessionStore } from './redis';
-import { log } from '@utils/logs';
 import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 const { ROOM_DOESNT_HAVE_COINS, SOCKET_NOT_IN_ROOM, COIN_NOT_AVAILABLE, INVALID_ROOM, COIN_NOT_FOUND } = errorsMessages;
 
@@ -41,7 +40,6 @@ export default function () {
         return callback({ error: SOCKET_NOT_IN_ROOM });
       }
       const coin = await serverStore.getCoin(roomName, coinID);
-      log('coin', coin, socket.id);
 
       if (!coin) {
         return callback({ error: COIN_NOT_FOUND });

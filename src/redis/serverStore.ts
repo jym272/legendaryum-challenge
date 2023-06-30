@@ -176,16 +176,39 @@ class ServerStore {
           coins: []
         };
 
-        for (const coinKey of coinKeys) {
-          const coinString = await this.redis.hgetall(coinKey);
+        // REFACTOR THIS PART TO A PIPELINE
+        // for (const coinKey of coinKeys) {
+        //   const coinString = await this.redis.hgetall(coinKey);
+        //
+        //   if (Object.keys(coinString).length) {
+        //     const coin: Coin = {
+        //       id: Number(coinString.id),
+        //       position: JSON.parse(coinString.position) as Coin['position'],
+        //       isAvailable: coinString.isAvailable === 'true'
+        //     };
+        //     room.coins.push(coin);
+        //   }
+        // }
+        const coinPipeline = this.redis.pipeline(); // Create a new pipeline for fetching coin data
 
-          if (Object.keys(coinString).length) {
-            const coin: Coin = {
-              id: Number(coinString.id),
-              position: JSON.parse(coinString.position) as Coin['position'],
-              isAvailable: coinString.isAvailable === 'true'
-            };
-            room.coins.push(coin);
+        for (const coinKey of coinKeys) {
+          coinPipeline.hgetall(coinKey); // Queue hgetall command for each coin key in the new pipeline
+        }
+
+        const coinResults = await coinPipeline.exec(); // Execute the pipeline to fetch coin data
+
+        if (coinResults) {
+          for (const coinResult of coinResults) {
+            const coinString = coinResult[1] as Record<string, string>;
+
+            if (coinResult[0] === null && Object.keys(coinString).length) {
+              const coin: Coin = {
+                id: Number(coinString.id),
+                position: JSON.parse(coinString.position) as Coin['position'],
+                isAvailable: coinString.isAvailable === 'true'
+              };
+              room.coins.push(coin);
+            }
           }
         }
 

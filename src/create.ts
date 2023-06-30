@@ -91,12 +91,15 @@ export async function createApplication(
   const { joinRoom, grabCoin } = createRoomHandlers();
 
   io.on('connection', async socket => {
+    socket.on('room:join', joinRoom);
+    socket.on('coin:grab', grabCoin);
     const sessionStore = getSessionStore();
     await sessionStore.saveSession(socket.data.sessionID, {
       userID: socket.data.userID,
       username: socket.data.username,
       connected: true
     });
+    void socket.join(socket.data.userID);
 
     socket.emit('session', {
       sessionID: socket.data.sessionID,
@@ -107,50 +110,14 @@ export async function createApplication(
 
     socket.emit('rooms', rooms);
 
-    // join the "userID" room, TODO: why? -> cada socket esta conectado al usaurio que es unico
-    // coda socket individual esta conectado a su socketID y a un userID
-    await socket.join(socket.data.userID);
-
     // TODO: test restore  Sessions NEXT
 
     const restoreSessionRooms = await sessionStore.getRoomsWithCoins(socket.data.sessionID);
-    // en esta vez le tengo que enviar un room lleno de monedas
-    // enviar solo si no esta vacio
     restoreSessionRooms.length > 0 && socket.emit('session:rejoinRooms', restoreSessionRooms); // TODO: testear, deberia permitir []
-
-    socket.on('room:join', joinRoom);
-    socket.on('coin:grab', grabCoin);
-    // listen all events
-    // socket.onAny((event, ...args) => {
-    //   console.log(event, args);
-    // });
-    // socket.on("disconnect", async () => {
-    //   const sockets = await io.in(userId).fetchSockets();
-    //   if (socket.length === 0) {
-    //     // no more active connections for the given user
-    //   }
-    // });
-
-    // forward the private message to the right recipient (and to other tabs of the sender)
-    // socket.on('private message', ({ content, to }) => {
-    //   const message: Message = {
-    //     content,
-    //     from: socket.data.userID,
-    //     to
-    //   };
-    //   socket.to(to).to(socket.data.userID).emit('private message', message);
-    //   messageStore.saveMessage(message);
-    // });
-
-    socket.on('disconnecting', () => {
-      log('disconnecting');
-    });
 
     // notify users upon disconnection
     socket.on('disconnect', async () => {
-      log('HOLIIIS');
       const matchingSockets = await io?.in(socket.data.userID).fetchSockets();
-      log('matching socket lenght', matchingSockets!.length);
       const isDisconnected = matchingSockets !== undefined && matchingSockets.length === 0;
       if (isDisconnected) {
         // update the connection status of the session
