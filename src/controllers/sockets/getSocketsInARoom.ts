@@ -1,12 +1,6 @@
 import { Request, Response } from 'express';
 import { getSocketServer } from '../../create';
-import { SocketData } from '@custom-types/serverTypes';
-
-interface RemoteSocketData {
-  id: string;
-  data: SocketData;
-  rooms: string[];
-}
+import { RemoteSocketData } from '@custom-types/serverTypes';
 
 // /api/room/:room/sockets
 export const getSocketsInARoomController = () => {

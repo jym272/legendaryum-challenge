@@ -1,3 +1,7 @@
+import { Coin, Room, RoomWithRequiredCoins } from '@custom-types/appTypes';
+import { Server } from 'socket.io';
+import { DefaultEventsMap } from 'socket.io/dist/typed-events';
+
 export interface Error {
   error: string;
   // errorDetails?: ValidationErrorItem[];
@@ -9,19 +13,21 @@ export interface Success<T> {
 
 export type Response<T> = Error | Success<T>;
 
-export interface Coin {
-  id: number;
-  position: {
-    x: number;
-    y: number;
-    z: number;
-  };
-  isAvailable: boolean;
-}
 export type RoomName = string;
+// socket.emit('session', {
+//       sessionID: socket.data.sessionID,
+//       userID: socket.data.userID
+//     });
 
+export interface SocketData {
+  sessionID: string;
+  userID: string;
+  username: string;
+}
 export interface ServerToClientsEvents {
-  rooms: (rooms: RoomName[]) => void;
+  session: ({ sessionID, userID }: { sessionID: string; userID: string }) => void;
+  rooms: (rooms: Room[]) => void;
+  'session:rejoinRooms': (rooms: RoomWithRequiredCoins[]) => void;
   // 'room:joined': (coins: Coin[]) => void;
   //El micro debe mandar una señal a todos los clientes, indicando qué monedas dejan de estar disponibles (cuando alguien más la agarra).
   'coin:grabbed': ({ coinID, room }: { coinID: number; room: RoomName }) => void;
@@ -32,32 +38,14 @@ export interface ClientToServerEvents {
   'coin:grab': ({ coinID, room }: { coinID: number; room: RoomName }, callback: (res?: Response<void>) => void) => void;
 }
 
-export interface SocketData {
-  sessionID: string;
-  userID: string;
-  username: string;
-}
-
-export interface Room {
-  name: RoomName;
-  area: {
-    x: {
-      max: number;
-      min: number;
-    };
-    y: {
-      max: number;
-      min: number;
-    };
-    z: {
-      max: number;
-      min: number;
-    };
-  };
-  amountOfCoins: number;
-  coins?: Coin[];
-}
-
 export interface ServerConfiguration {
   rooms: Room[];
 }
+
+export interface RemoteSocketData {
+  id: string;
+  data: SocketData;
+  rooms: string[];
+}
+
+export type ServerIo = Server<ClientToServerEvents, ServerToClientsEvents, DefaultEventsMap, SocketData>;

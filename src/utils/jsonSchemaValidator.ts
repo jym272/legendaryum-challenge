@@ -1,5 +1,5 @@
 import Ajv, { JTDSchemaType } from 'ajv/dist/jtd';
-import { Coin, Room, ServerConfiguration } from '@custom-types/serverTypes';
+import { Coin, Room, ServerConfiguration } from '@custom-types/index';
 const ajv = new Ajv();
 
 const coinSchema: JTDSchemaType<Coin> = {

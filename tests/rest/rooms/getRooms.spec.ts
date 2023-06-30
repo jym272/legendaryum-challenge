@@ -1,6 +1,6 @@
 import axios, { AxiosResponse, HttpStatusCode } from 'axios';
 import { createServer, Server } from 'http';
-import { Room, ServerConfiguration } from '@custom-types/serverTypes';
+import { Room, ServerConfiguration } from '@custom-types/index';
 import { AddressInfo } from 'net';
 import Redis from 'ioredis';
 import { createPartialDone } from '@utils/testUtils';
@@ -77,7 +77,11 @@ afterEach(() => {
 });
 
 afterAll(done => {
-  void redisClient.quit(done);
+  void redisClient.quit((err, res) => {
+    if (res === 'OK') {
+      done();
+    }
+  });
 });
 
 describe('/api/rooms endpoint GET', () => {

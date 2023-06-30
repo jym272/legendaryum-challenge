@@ -1,5 +1,5 @@
 import Redis from 'ioredis';
-import { Coin, Room, RoomName, ServerConfiguration } from '@custom-types/serverTypes';
+import { Coin, Room, RoomName, RoomWithRequiredCoins, ServerConfiguration } from '@custom-types/index';
 import { getRedisClient } from '../setup';
 
 class ServerStore {
@@ -126,6 +126,99 @@ class ServerStore {
     }
     return null;
   }
+
+  async getRooms(roomName: RoomName[]): Promise<Room[]> {
+    const pipeline = this.redis.pipeline();
+    for (const room of roomName) {
+      pipeline.hgetall(`room:${room}`);
+    }
+    const rooms = await pipeline.exec();
+    if (!rooms) return [];
+    const data = rooms as [Error | null, Record<string, string>][];
+    return data
+      .map(([error, room]) =>
+        error
+          ? undefined
+          : {
+              name: room.name,
+              area: JSON.parse(room.area) as Room['area'],
+              amountOfCoins: Number(room.amountOfCoins)
+            }
+      )
+      .filter(Boolean) as Room[];
+  }
+
+  async getRoomsWithCoins(roomName: RoomName[]): Promise<RoomWithRequiredCoins[]> {
+    const pipeline = this.redis.pipeline();
+    const roomsWithCoins: RoomWithRequiredCoins[] = [];
+
+    for (const room of roomName) {
+      // Get the room details
+      pipeline.hgetall(`room:${room}`);
+
+      // Get the coins in the room
+      pipeline.smembers(`room:${room}:coins`);
+    }
+
+    const results = await pipeline.exec();
+
+    if (!results) return roomsWithCoins;
+
+    for (let i = 0; i < results.length; i += 2) {
+      const roomData = results[i][1] as Record<string, string>;
+      const coinKeys = results[i + 1][1] as string[];
+
+      if (Object.keys(roomData).length && Array.isArray(coinKeys)) {
+        const room: RoomWithRequiredCoins = {
+          name: roomData.name,
+          area: JSON.parse(roomData.area) as Room['area'],
+          amountOfCoins: Number(roomData.amountOfCoins),
+          coins: []
+        };
+
+        // REFACTOR THIS PART TO A PIPELINE
+        // for (const coinKey of coinKeys) {
+        //   const coinString = await this.redis.hgetall(coinKey);
+        //
+        //   if (Object.keys(coinString).length) {
+        //     const coin: Coin = {
+        //       id: Number(coinString.id),
+        //       position: JSON.parse(coinString.position) as Coin['position'],
+        //       isAvailable: coinString.isAvailable === 'true'
+        //     };
+        //     room.coins.push(coin);
+        //   }
+        // }
+        const coinPipeline = this.redis.pipeline(); // Create a new pipeline for fetching coin data
+
+        for (const coinKey of coinKeys) {
+          coinPipeline.hgetall(coinKey); // Queue hgetall command for each coin key in the new pipeline
+        }
+
+        const coinResults = await coinPipeline.exec(); // Execute the pipeline to fetch coin data
+
+        if (coinResults) {
+          for (const coinResult of coinResults) {
+            const coinString = coinResult[1] as Record<string, string>;
+
+            if (coinResult[0] === null && Object.keys(coinString).length) {
+              const coin: Coin = {
+                id: Number(coinString.id),
+                position: JSON.parse(coinString.position) as Coin['position'],
+                isAvailable: coinString.isAvailable === 'true'
+              };
+              room.coins.push(coin);
+            }
+          }
+        }
+
+        roomsWithCoins.push(room);
+      }
+    }
+
+    return roomsWithCoins;
+  }
+
   async getAllRooms(): Promise<Room[]> {
     const roomNames = await this.redis.smembers('rooms');
     const pipeline = this.redis.pipeline();
@@ -142,7 +235,7 @@ class ServerStore {
 
     return data
       .map(([error, room]) =>
-        error
+        error || Object.keys(room).length === 0
           ? undefined
           : {
               name: room.name,

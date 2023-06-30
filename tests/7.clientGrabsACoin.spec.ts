@@ -6,9 +6,10 @@ import {
   ClientToServerEvents,
   Coin,
   ServerConfiguration,
+  ServerIo,
   ServerToClientsEvents,
   Success
-} from '@custom-types/serverTypes';
+} from '@custom-types/index';
 import errorsMessages from '@custom-types/errors';
 import { createPartialDone } from '@utils/testUtils';
 import Redis from 'ioredis';
@@ -47,8 +48,12 @@ beforeAll(done => {
   });
 });
 
-afterAll(async () => {
-  await redisClient.quit();
+afterAll(done => {
+  void redisClient.quit((err, res) => {
+    if (res === 'OK') {
+      done();
+    }
+  });
 });
 
 describe('one user grabs a coin', () => {
@@ -114,13 +119,15 @@ describe('two users in the orangeRoom', () => {
     socket: Socket<ServerToClientsEvents, ClientToServerEvents>,
     anotherSocket: Socket<ServerToClientsEvents, ClientToServerEvents>,
     userOrangeCoins: Coin[],
-    anotherUserOrangeCoins: Coin[];
+    anotherUserOrangeCoins: Coin[],
+    socketServer: ServerIo;
 
   beforeEach(done => {
     const partialDone = createPartialDone(5, done);
     void redisClient.flushall(partialDone);
     httpServer = createServer();
-    void createApplication(httpServer, {}, metaverseConfiguration).then(() => {
+    void createApplication(httpServer, {}, metaverseConfiguration).then(({ io: serverIo }) => {
+      socketServer = serverIo;
       httpServer.listen(() => {
         const port = (httpServer.address() as AddressInfo).port;
         socket = io(`http://localhost:${port}`, {
@@ -151,10 +158,14 @@ describe('two users in the orangeRoom', () => {
     });
   });
 
-  afterEach(() => {
-    httpServer.close();
+  afterEach(done => {
     socket.disconnect();
     anotherSocket.disconnect();
+    socketServer.close(err => {
+      if (err === undefined) {
+        done();
+      }
+    });
   });
 
   describe('user grabs a coin, another user get coin:grabbed event', () => {

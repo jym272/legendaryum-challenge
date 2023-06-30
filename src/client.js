@@ -15,7 +15,7 @@ socket.auth = { username: 'jorge' };
 // socket.auth = { username: "jorge" };
 socket.connect();
 socket.on('connect', () => {
-  log('connected');
+  log('connected', Date.now());
   //  'room:join': (room: RoomName, callback: (res?: Response<void>) => void) => void;
   // socket.emit('room:join', 'orangeRoom', res => {
   //   if (res.error) {
@@ -44,8 +44,15 @@ socket.on('error', err => {
 socket.on('connect_error', err => {
   log(`connect_error due to ${err.message}`);
 });
-
-//wait 5s
+// listen all events of socket status
+// socket.onAny((event, ...args) => {
+//   console.log(event, args);
+// });
+// wait 5s
 // setTimeout(() => {
 //   socket.disconnect();
+// }, 2000);
+//
+// setTimeout(() => {
+//   // socket.disconnect();
 // }, 5000);

@@ -3,9 +3,12 @@ import { AddressInfo } from 'net';
 import { io, Socket } from 'socket.io-client';
 import { createApplication } from '../src/create';
 import { createPartialDone } from '@utils/testUtils';
-import { ServerConfiguration } from '@custom-types/serverTypes';
+import { ClientToServerEvents, ServerConfiguration, ServerToClientsEvents } from '@custom-types/serverTypes';
 import Redis from 'ioredis';
 import { getRedisClient } from '../src/setup';
+import errors from '@custom-types/errors';
+import { Room } from '@custom-types/appTypes';
+const { NO_USERNAME_PROVIDED } = errors;
 
 // agregar las features al readme, por ejemplo las sessions del cliente
 // los clientes al conectarse neceistan auth con username y room
@@ -22,8 +25,11 @@ import { getRedisClient } from '../src/setup';
 // los test tiene que tener un docker compose con el server de redis totalmente
 // limpio, serguir testeando e implementando funcionalidades y test
 
-describe('handshake validation', () => {
-  let httpServer: Server, socket: Socket, metaverseConfiguration: ServerConfiguration, redisClient: Redis;
+describe('connection to the server', () => {
+  let httpServer: Server,
+    socket: Socket<ServerToClientsEvents, ClientToServerEvents>,
+    metaverseConfiguration: ServerConfiguration,
+    redisClient: Redis;
   beforeAll(done => {
     metaverseConfiguration = {
       rooms: [
@@ -66,9 +72,6 @@ describe('handshake validation', () => {
       ]
     };
     redisClient = getRedisClient();
-    // if (redisClient.status === 'close') {
-    //   void redisClient.connect();
-    // }
     redisClient.on('ready', () => {
       done();
     });
@@ -82,44 +85,82 @@ describe('handshake validation', () => {
     void createApplication(httpServer, {}, metaverseConfiguration).then(() => {
       httpServer.listen(() => {
         const port = (httpServer.address() as AddressInfo).port;
-        socket = io(`http://localhost:${port}`, { autoConnect: false, transports: ['websocket'] });
+        socket = io(`http://localhost:${port}`, { autoConnect: false, transports: ['polling'] });
         partialDone();
       });
     });
   });
 
   afterEach(() => {
-    httpServer.close();
     socket.disconnect();
+    httpServer.close();
   });
 
   afterAll(done => {
-    void redisClient.quit(done);
+    void redisClient.quit((err, res) => {
+      if (res === 'OK') {
+        done();
+      }
+    });
   });
 
-  describe('username is needed in the handshake, once connected, the server emits the rooms in the metaverse', () => {
-    it('must have a username in auth object', done => {
+  describe('connection to the server', () => {
+    it('wil fail because must have a username in auth object', done => {
       socket.connect();
       socket.on('connect_error', err => {
-        expect(err.message).toBe('no username provided');
+        expect(err.message).toBe(NO_USERNAME_PROVIDED);
         done();
       });
     });
-    it('successful connection, username provided', done => {
+    it('successful connection, username provided, session event emitted', done => {
+      const partialDone = createPartialDone(2, done);
       socket.auth = { username: 'user' };
       socket.connect();
       socket.on('connect', () => {
         expect(socket.connected).toBe(true);
-        done();
+        expect(socket.auth).toStrictEqual({ username: 'user' });
+        expect(socket.id).toBeDefined();
+        partialDone();
+      });
+      socket.on('session', session => {
+        expect(session).toEqual(
+          expect.objectContaining({
+            sessionID: expect.any(String) as string,
+            userID: expect.any(String) as string
+          })
+        );
+        partialDone();
       });
     });
-    it('successful connection, the server emits the ev: rooms', done => {
-      const partialDone = createPartialDone(2, done);
+    it('the server emits the event rooms after emits session event', done => {
+      const partialDone = createPartialDone(3, done);
       socket.auth = { username: 'user' };
       socket.connect();
       socket.on('connect', partialDone);
-      socket.on('rooms', (rooms: string[]) => {
-        expect(rooms.sort()).toStrictEqual(metaverseConfiguration.rooms.map(room => room.name).sort());
+      socket.on('session', partialDone);
+      socket.on('rooms', rooms => {
+        expect(rooms).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              name: expect.any(String) as string,
+              area: expect.objectContaining({
+                x: expect.objectContaining({
+                  max: expect.any(Number) as number,
+                  min: expect.any(Number) as number
+                }) as Room['area']['x'],
+                y: expect.objectContaining({
+                  max: expect.any(Number) as number,
+                  min: expect.any(Number) as number
+                }) as Room['area']['y'],
+                z: expect.objectContaining({
+                  max: expect.any(Number) as number,
+                  min: expect.any(Number) as number
+                }) as { max: number; min: number }
+              }) as Room['area'],
+              amountOfCoins: expect.any(Number) as number
+            })
+          ])
+        );
         partialDone();
       });
     });

@@ -1,62 +1,57 @@
 import { Server as HttpServer } from 'http';
-import { Server, ServerOptions, Socket } from 'socket.io';
+import { Server, ServerOptions } from 'socket.io';
 import { DefaultEventsMap } from 'socket.io/dist/typed-events';
-import { ClientToServerEvents, ServerConfiguration, ServerToClientsEvents, SocketData } from '@custom-types/index';
+import {
+  ClientToServerEvents,
+  ServerConfiguration,
+  ServerIo,
+  ServerToClientsEvents,
+  SocketData
+} from '@custom-types/index';
 import { generateCoins, getServerConfiguration, log } from '@utils/index';
 import createRoomHandlers from './roomsHandlers';
-import { getServerStore } from './redis';
+import { getServerStore, getSessionStore } from './redis';
+import * as crypto from 'crypto';
+import errors from '@custom-types/errors';
+const { NO_USERNAME_PROVIDED } = errors;
 
-// export let configuration: ServerConfiguration = { rooms: [] };
-
-// function randomId(): string {
-//   return crypto.randomBytes(8).toString('hex');
-// }
-
-type ServerIo = Server<ClientToServerEvents, ServerToClientsEvents, DefaultEventsMap, SocketData>;
+function randomId(): string {
+  return crypto.randomBytes(8).toString('hex');
+}
 
 let io: ServerIo | undefined;
 
 export const getSocketServer = () => {
   if (!io) {
-    throw new Error('Socket server not initialized');
+    throw new Error('Socket server not initialized'); //TODO test! cuando testee socket api
   }
   return io;
 };
 
 const addMiddlewares = (io: ServerIo) => {
-  io.use((socket: Socket, next) => {
-    const username = socket.handshake.auth.username as string | undefined;
-    if (!username) {
-      return next(new Error('no username provided'));
+  io.use(async (socket, next) => {
+    // El cliente envía unsa session, significa que ya se conecto antes y envio la sessio que se le envio
+    // si es que tengo la session ya tengo un username y un userID
+    const sessionID = socket.handshake.auth.sessionID as string | undefined;
+    if (sessionID) {
+      const session = await getSessionStore().findSession(sessionID);
+      if (session) {
+        socket.data.sessionID = sessionID;
+        socket.data.userID = session.userID;
+        socket.data.username = session.username;
+        return next();
+      }
     }
+    const username = socket.handshake.auth.username as string | undefined;
+
+    if (!username) {
+      return next(new Error(NO_USERNAME_PROVIDED));
+    }
+    socket.data.sessionID = randomId();
+    socket.data.userID = randomId();
+    socket.data.username = username;
     next();
   });
-
-  // io.use(async (socket, next) => {
-  //   //sessionID is in the client browser, or something
-  //   // TODO: con sessionId podemos reconectarlo en los cuartos en los cuales estaba conectada
-  //   const sessionID = socket.handshake.auth.sessionID as string | undefined;
-  //   if (sessionID) {
-  //     const session = await getSessionStore().findSession(sessionID);
-  //     if (session) {
-  //       socket.data.sessionID = sessionID;
-  //       socket.data.userID = session.userID;
-  //       socket.data.username = session.username;
-  //       return next();
-  //     }
-  //   }
-  //   const username = socket.handshake.auth.username as string | undefined;
-  //
-  //   if (!username) {
-  //     return next(new Error('no username provided'));
-  //   }
-  //   socket.data.sessionID = randomId();
-  //   socket.data.userID = randomId();
-  //   socket.data.username = username;
-  //   next();
-  // });
-
-  return io;
 };
 
 const setUpServerConfiguration = async (serverConfiguration: Partial<ServerConfiguration> = {}) => {
@@ -72,11 +67,11 @@ const setUpServerConfiguration = async (serverConfiguration: Partial<ServerConfi
   // TODO: testear estos flujos
   const storedConfiguration = await serverStore.getServerConfiguration();
   if (!storedConfiguration || storedConfiguration !== JSON.stringify(configuration)) {
-    log('New server configuration, saving it to Redis');
     // TODO: borrar toda la base de datos primero!, realizar un flush!!!
     await serverStore.saveConfiguration(configuration); // the configuration saved is withoi the coins
     generateCoins(configuration);
     await serverStore.saveServerConfiguration(configuration); // it will save coins also, order is important
+    // log('New server configuration, saving it to Redis');
     return;
   }
   log('Server configuration already stored in Redis');
@@ -89,7 +84,6 @@ export async function createApplication(
 ) {
   io = new Server<ClientToServerEvents, ServerToClientsEvents, DefaultEventsMap, SocketData>(httpServer, serverOptions);
 
-  // validRooms = getNameOfTheRooms(configuration);
   await setUpServerConfiguration(serverConfiguration);
 
   addMiddlewares(io);
@@ -97,63 +91,54 @@ export async function createApplication(
   const { joinRoom, grabCoin } = createRoomHandlers();
 
   io.on('connection', async socket => {
-    const rooms = await getServerStore().getRoomNames();
-    socket.emit('rooms', rooms);
-    socket.on('room:join', joinRoom); //TODO: testear que el socket se unio al cuarto
+    socket.on('room:join', joinRoom);
     socket.on('coin:grab', grabCoin);
-    // listen all events
-    // socket.onAny((event, ...args) => {
-    //   console.log(event, args);
-    // });
-    // socket.on("disconnect", async () => {
-    //   const sockets = await io.in(userId).fetchSockets();
-    //   if (socket.length === 0) {
-    //     // no more active connections for the given user
-    //   }
-    // });
+    const sessionStore = getSessionStore();
+    await sessionStore.saveSession(socket.data.sessionID, {
+      userID: socket.data.userID,
+      username: socket.data.username,
+      connected: true
+    });
+    void socket.join(socket.data.userID);
 
-    // sessionStore.saveSession(socket.data.sessionID, {
-    //   userID: socket.data.userID,
-    //   username: socket.data.username,
-    //   connected: true
-    // });
-    //
-    // // emit session details
-    // socket.emit('session', {
-    //   sessionID: socket.data.sessionID,
-    //   userID: socket.data.userID
-    // });
+    socket.emit('session', {
+      sessionID: socket.data.sessionID,
+      userID: socket.data.userID
+    });
 
-    // join the "userID" room
-    // void socket.join(socket.data.userID);
+    const rooms = await getServerStore().getAllRooms();
+    socket.emit('rooms', rooms);
 
-    // forward the private message to the right recipient (and to other tabs of the sender)
-    // socket.on('private message', ({ content, to }) => {
-    //   const message: Message = {
-    //     content,
-    //     from: socket.data.userID,
-    //     to
-    //   };
-    //   socket.to(to).to(socket.data.userID).emit('private message', message);
-    //   messageStore.saveMessage(message);
-    // });
+    const restoreSessionRooms = await sessionStore.getRoomsWithCoins(socket.data.sessionID);
+    if (restoreSessionRooms.length > 0) {
+      restoreSessionRooms.forEach(({ name }) => {
+        void socket.join(name);
+      });
+      socket.emit('session:rejoinRooms', restoreSessionRooms);
+    }
 
-    // notify users upon disconnection
-    // socket.on('disconnect', async () => {
-    //   const matchingSockets = await io.in(socket.data.userID).allSockets();
-    //   const isDisconnected = matchingSockets.size === 0;
-    //   if (isDisconnected) {
-    //     // notify other users
-    //     socket.broadcast.emit('user disconnected', socket.data.userID);
-    //     // update the connection status of the session
-    //     sessionStore.saveSession(socket.data.sessionID, {
-    //       userID: socket.data.userID,
-    //       username: socket.data.username,
-    //       connected: false
-    //     });
-    //   }
-    // });
+    socket.on('disconnect', async () => {
+      const matchingSockets = await io?.in(socket.data.userID).fetchSockets();
+      const isDisconnected = matchingSockets !== undefined && matchingSockets.length === 0;
+      if (isDisconnected) {
+        await sessionStore.saveSession(socket.data.sessionID, {
+          userID: socket.data.userID,
+          username: socket.data.username,
+          connected: false
+        });
+      }
+    });
   });
+
+  io.on('error', err => {
+    log('Error', err);
+  });
+  // io disconnect
+  io.on('disconnect', () => {
+    log('disconnect');
+  });
+
+  //
   // io.of('/').adapter.on('create-room', room => {
   //   log(`room ${room as string} was created`);
   // });

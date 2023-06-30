@@ -141,7 +141,11 @@ describe('create application function, redis server initialized', () => {
   });
 
   afterAll(done => {
-    void redisClient.quit(done);
+    void redisClient.quit((err, res) => {
+      if (res === 'OK') {
+        done();
+      }
+    });
   });
 
   beforeEach(done => {

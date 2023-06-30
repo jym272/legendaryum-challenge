@@ -7,92 +7,100 @@ import {
   Coin,
   Error,
   ServerConfiguration,
+  ServerIo,
   ServerToClientsEvents,
   Success
-} from '@custom-types/serverTypes';
+} from '@custom-types/index';
 import errorsMessages from '@custom-types/errors';
 import Redis from 'ioredis';
 import { createPartialDone } from '@utils/testUtils';
 import { getRedisClient } from '../src/setup';
 const { INVALID_ROOM } = errorsMessages;
-describe('client joins a room in the metaverse', () => {
-  let httpServer: Server,
-    socket: Socket<ServerToClientsEvents, ClientToServerEvents>,
-    metaverseConfiguration: ServerConfiguration,
-    redisClient: Redis;
-  beforeAll(done => {
-    metaverseConfiguration = {
-      rooms: [
-        {
-          name: 'orangeRoom',
-          area: {
-            x: {
-              max: 10,
-              min: 0
-            },
-            y: {
-              max: 10,
-              min: 0
-            },
-            z: {
-              max: 10,
-              min: 0
-            }
+
+let metaverseConfiguration: ServerConfiguration, redisClient: Redis;
+beforeAll(done => {
+  metaverseConfiguration = {
+    rooms: [
+      {
+        name: 'orangeRoom',
+        area: {
+          x: {
+            max: 10,
+            min: 0
           },
-          amountOfCoins: 10
+          y: {
+            max: 10,
+            min: 0
+          },
+          z: {
+            max: 10,
+            min: 0
+          }
         },
-        {
-          name: 'blueRoom',
-          area: {
-            x: {
-              max: 0,
-              min: -2
-            },
-            y: {
-              max: 2,
-              min: 0
-            },
-            z: {
-              max: 1,
-              min: 0
-            }
+        amountOfCoins: 10
+      },
+      {
+        name: 'blueRoom',
+        area: {
+          x: {
+            max: 0,
+            min: -2
           },
-          amountOfCoins: 5
-        }
-      ]
-    };
-    redisClient = getRedisClient();
-    // if (redisClient.status === 'close') {
-    //   void redisClient.connect();
-    // }
-    redisClient.on('ready', () => {
-      done();
-    });
+          y: {
+            max: 2,
+            min: 0
+          },
+          z: {
+            max: 1,
+            min: 0
+          }
+        },
+        amountOfCoins: 5
+      }
+    ]
+  };
+  redisClient = getRedisClient();
+  redisClient.on('ready', () => {
+    done();
   });
+});
+
+afterAll(done => {
+  void redisClient.quit((err, res) => {
+    if (res === 'OK') {
+      done();
+    }
+  });
+});
+describe('client joins a room in the metaverse', () => {
+  let httpServer: Server, socket: Socket<ServerToClientsEvents, ClientToServerEvents>, socketServer: ServerIo;
 
   beforeEach(done => {
-    const partialDone = createPartialDone(2, done);
-
     httpServer = createServer();
-    void redisClient.flushall(partialDone);
-    void createApplication(httpServer, {}, metaverseConfiguration).then(() => {
-      httpServer.listen(() => {
-        const port = (httpServer.address() as AddressInfo).port;
-        socket = io(`http://localhost:${port}`, { autoConnect: false, transports: ['websocket'] });
-        socket.auth = { username: 'user' };
-        socket.connect();
-        socket.on('connect', partialDone);
-      });
+    void redisClient.flushall((err, result) => {
+      if (result === 'OK') {
+        void createApplication(httpServer, {}, metaverseConfiguration).then(({ io: serverIo }) => {
+          socketServer = serverIo;
+          httpServer.listen(() => {
+            const port = (httpServer.address() as AddressInfo).port;
+            socket = io(`http://localhost:${port}`, { autoConnect: false, transports: ['websocket'] });
+            socket.auth = { username: 'user' };
+            socket.connect();
+            socket.on('connect', done);
+          });
+        });
+      }
     });
   });
 
-  afterEach(() => {
-    httpServer.close();
+  afterEach(done => {
     socket.disconnect();
-  });
-
-  afterAll(done => {
-    void redisClient.quit(done);
+    //also close the http server that socket.io creates
+    socketServer.close(err => {
+      if (err === undefined) {
+        done();
+      }
+    });
   });
 
   describe('client emits room:join event after successful connection ', () => {

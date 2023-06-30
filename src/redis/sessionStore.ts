@@ -1,49 +1,24 @@
 import Redis from 'ioredis';
 import { getRedisClient } from '../setup';
+import { RoomName, RoomWithRequiredCoins } from '@custom-types/index';
+import { getServerStore } from '@redis/serverStore';
 
-interface Session {
+export interface Session {
   userID: string;
   username: string;
   connected: boolean;
 }
 
-abstract class SessionStore {
-  abstract findSession(id: string): Promise<Session | undefined>;
-  abstract saveSession(id: string, session: Session): void;
-  abstract findAllSessions(): Promise<Session[]>;
-}
-
-/*class InMemorySessionStore extends SessionStore {
-  private sessions: Map<string, Session>;
-
-  constructor() {
-    super();
-    this.sessions = new Map();
-  }
-
-  findSession(id: string): Promise<Session | undefined> {
-    return Promise.resolve(this.sessions.get(id));
-  }
-
-  saveSession(id: string, session: Session): void {
-    this.sessions.set(id, session);
-  }
-
-  findAllSessions(): Promise<Session[]> {
-    return Promise.resolve([...this.sessions.values()]);
-  }
-}*/
-
+// TODO: env var
 const SESSION_TTL = 24 * 60 * 60;
 
 const mapSession = ([userID, username, connected]: (string | null)[]): Session | undefined =>
   userID && username ? { userID, username, connected: connected === 'true' } : undefined;
 
-class RedisSessionStore extends SessionStore {
+class SessionStore {
   private redisClient: Redis;
 
   constructor(redisClient: Redis) {
-    super();
     this.redisClient = redisClient;
   }
 
@@ -52,8 +27,22 @@ class RedisSessionStore extends SessionStore {
     return mapSession(sessionData);
   }
 
-  saveSession(id: string, { userID, username, connected }: Session): void {
-    void this.redisClient
+  async addRoomToSession(id: string, roomName: RoomName): Promise<void> {
+    await this.redisClient.sadd(`session:${id}:rooms`, roomName);
+    //TODO: añadir logica para agregarle el tiempo de expiracion -> es el restante en la session
+  }
+
+  async getRoomsWithCoins(id: string): Promise<RoomWithRequiredCoins[]> {
+    const roomNames = await this.redisClient.smembers(`session:${id}:rooms`);
+    if (roomNames.length === 0) {
+      return [];
+    }
+    return getServerStore().getRoomsWithCoins(roomNames);
+  }
+
+  // TODO some method to join a room
+  async saveSession(id: string, { userID, username, connected }: Session) {
+    await this.redisClient
       .multi()
       .hset(`session:${id}`, 'userID', userID, 'username', username, 'connected', connected ? 'true' : 'false')
       .expire(`session:${id}`, SESSION_TTL)
@@ -86,7 +75,7 @@ let sessionStore: SessionStore | null = null;
 
 export const getSessionStore = () => {
   if (!sessionStore) {
-    sessionStore = new RedisSessionStore(getRedisClient());
+    sessionStore = new SessionStore(getRedisClient().duplicate());
   }
   return sessionStore;
 };
