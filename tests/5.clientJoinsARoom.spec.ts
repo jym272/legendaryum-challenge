@@ -15,6 +15,7 @@ import errorsMessages from '@custom-types/errors';
 import Redis from 'ioredis';
 import { createPartialDone } from '@utils/testUtils';
 import { getRedisClient } from '../src/setup';
+import { getRemoteSockets } from '@tests/utils';
 const { INVALID_ROOM } = errorsMessages;
 
 let metaverseConfiguration: ServerConfiguration, redisClient: Redis;
@@ -115,7 +116,7 @@ describe('client joins a room in the metaverse', () => {
       });
     });
 
-    it('client join successfully to a two rooms', done => {
+    it('client join successfully to two rooms', done => {
       const partialDone = createPartialDone(2, done);
       socket.emit('room:join', 'orangeRoom', res => {
         expect(res).toBeDefined();
@@ -154,6 +155,77 @@ describe('client joins a room in the metaverse', () => {
         );
         done();
       });
+    });
+  });
+});
+
+describe('two sockets in the same session, if one socket join a room the other socket also is joined', () => {
+  let httpServer: Server,
+    socket: Socket<ServerToClientsEvents, ClientToServerEvents>,
+    socket2: Socket<ServerToClientsEvents, ClientToServerEvents>,
+    port: number,
+    socketServer: ServerIo;
+
+  const sessionCredentials = {
+    username: 'tilo',
+    sessionID: '',
+    userID: ''
+  };
+
+  beforeAll(done => {
+    const partialDone = createPartialDone(2, done);
+    httpServer = createServer();
+    void redisClient.flushall((err, result) => {
+      if (result === 'OK') {
+        void createApplication(httpServer, {}, metaverseConfiguration).then(({ io: serverIo }) => {
+          socketServer = serverIo;
+          httpServer.listen(() => {
+            port = (httpServer.address() as AddressInfo).port;
+            socket = io(`http://localhost:${port}`, {
+              auth: { username: sessionCredentials.username },
+              transports: ['websocket']
+            });
+            socket.on('connect', () => {
+              partialDone();
+            });
+            socket.on('session', ({ sessionID, userID }) => {
+              sessionCredentials.sessionID = sessionID;
+              sessionCredentials.userID = userID;
+              socket2 = io(`http://localhost:${port}`, {
+                auth: { username: 'user', sessionID: sessionCredentials.sessionID },
+                transports: ['websocket']
+              });
+              socket2.on('connect', () => {
+                partialDone();
+              });
+            });
+          });
+        });
+      }
+    });
+  });
+
+  afterAll(done => {
+    socket.disconnect();
+    socketServer.close(err => {
+      if (err === undefined) {
+        done();
+      }
+    });
+  });
+
+  describe('first socket joins two rooms', () => {
+    beforeEach(done => {
+      const partialDone = createPartialDone(2, done);
+      socket.emit('room:join', 'orangeRoom', partialDone).emit('room:join', 'blueRoom', partialDone);
+    });
+
+    it('second socket from the same session also joined the same rooms', async () => {
+      const remoteSockets = await getRemoteSockets(socketServer);
+      const socketRooms = remoteSockets.find(remoteSocket => remoteSocket.id === socket.id)?.rooms;
+      const socket2Rooms = remoteSockets.find(remoteSocket => remoteSocket.id === socket2.id)?.rooms;
+      expect(socketRooms?.sort()).toEqual(['orangeRoom', 'blueRoom', sessionCredentials.userID, socket.id].sort());
+      expect(socket2Rooms?.sort()).toEqual(['orangeRoom', 'blueRoom', sessionCredentials.userID, socket2.id].sort());
     });
   });
 });

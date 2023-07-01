@@ -4,7 +4,6 @@ import { RemoteSocketData } from '@custom-types/serverTypes';
 
 // /api/room/:room/sockets
 export const getSocketsInARoomController = () => {
-  ///api/room/:room/sockets
   return async (req: Request, res: Response) => {
     const io = getSocketServer();
     const sockets = await io.in(req.params.room).fetchSockets();

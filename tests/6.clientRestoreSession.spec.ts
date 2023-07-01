@@ -13,6 +13,7 @@ import {
 import Redis from 'ioredis';
 import { getRedisClient } from '../src/setup';
 import { Coin } from '@custom-types/appTypes';
+import { getRemoteSockets } from '@tests/utils/functions';
 
 let redisClient: Redis, metaverseConfiguration: ServerConfiguration;
 
@@ -124,16 +125,6 @@ describe('client join a room, get the coins', () => {
     });
   });
 
-  const getRemoteSockets = async () => {
-    return (await socketServer.fetchSockets()).map(socket => {
-      return {
-        id: socket.id,
-        data: socket.data,
-        rooms: [...socket.rooms]
-      };
-    });
-  };
-
   it('second socket is connected from the same client and the sessions room is restored for that socket', done => {
     const partialDone = createPartialDone(3, done);
 
@@ -176,7 +167,7 @@ describe('client join a room, get the coins', () => {
         expect(blueRoom?.coins.length).toBe(blueRoomCoins.length);
         expect(blueRoom?.coins.sort((a, b) => a.id - b.id)).toEqual(blueRoomCoins.sort((a, b) => a.id - b.id));
 
-        void getRemoteSockets().then(remoteSockets => {
+        void getRemoteSockets(socketServer).then(remoteSockets => {
           const socket_2 = remoteSockets.find(socket => socket.id === socket2.id);
           expect(socket_2?.rooms.sort()).toEqual(
             ['blueRoom', socket2.id, 'orangeRoom', sessionCredentials.userID].sort()
