@@ -18,7 +18,15 @@ export default function () {
       if (!rooms.includes(room)) {
         return callback({ error: INVALID_ROOM });
       }
-      await socket.join(room); // TODO: testear si me queiero unir dos veces al mismo cuarto
+
+      const sockets = await socket.in(socket.data.userID).fetchSockets();
+
+      sockets.forEach(socket => {
+        if (!socket.rooms.has(room)) {
+          socket.join(room);
+        }
+      });
+      await socket.join(room);
 
       const coins = await serverStore.getCoinsByRoomName(room);
       if (coins.length === 0) {

@@ -2,8 +2,7 @@ import { Request, Response } from 'express';
 import { getSocketServer } from '../../create';
 import { RemoteSocketData } from '@custom-types/serverTypes';
 
-/// /api/sockets
-
+// /api/sockets
 export const getSocketsController = () => {
   return async (req: Request, res: Response) => {
     const io = getSocketServer();

@@ -6,6 +6,7 @@ import { createPartialDone } from '@utils/testUtils';
 import { ClientToServerEvents, ServerConfiguration, ServerIo, ServerToClientsEvents } from '@custom-types/serverTypes';
 import Redis from 'ioredis';
 import { getRedisClient } from '../src/setup';
+import { getRemoteSockets } from '@tests/utils/functions';
 
 let redisClient: Redis, metaverseConfiguration: ServerConfiguration;
 
@@ -167,18 +168,8 @@ describe('two sockets connected', () => {
     httpServer.close();
   });
 
-  const getRemoteSockets = async () => {
-    return (await socketServer.fetchSockets()).map(socket => {
-      return {
-        id: socket.id,
-        data: socket.data,
-        rooms: [...socket.rooms]
-      };
-    });
-  };
-
   it('only one socket is disconnected, the connected param is still true in session', async () => {
-    const remoteSockets = await getRemoteSockets();
+    const remoteSockets = await getRemoteSockets(socketServer);
 
     expect(remoteSockets.length).toBe(2);
     expect(remoteSockets[0].id).not.toBe(remoteSockets[1].id);
@@ -192,7 +183,7 @@ describe('two sockets connected', () => {
     //wait for server to process the disconnection
     await new Promise(resolve => setTimeout(resolve, 30));
 
-    const remoteSocketsAgain = await getRemoteSockets();
+    const remoteSocketsAgain = await getRemoteSockets(socketServer);
     expect(remoteSocketsAgain.length).toBe(1);
     expect(remoteSocketsAgain[0].id).toBe(socket.id);
 
@@ -211,7 +202,7 @@ describe('two sockets connected', () => {
     //wait for server to process the disconnection
     await new Promise(resolve => setTimeout(resolve, 30));
 
-    const remoteSocketsAgain = await getRemoteSockets();
+    const remoteSocketsAgain = await getRemoteSockets(socketServer);
     expect(remoteSocketsAgain.length).toBe(0);
 
     const persistenceSession = await redisClient.hgetall(`session:${sessionCredentials.sessionID}`);
