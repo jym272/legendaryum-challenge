@@ -1,6 +1,11 @@
+/** @type {import('ts-jest').JestConfigWithTsJest} */
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
+
+  // transform: {
+  //   '^.+\\.tsx?$': ['ts-jest', { isolatedModules: true }]
+  // },
   moduleNameMapper: {
     '^@routes/(.*)$': '<rootDir>/src/routes/$1',
     '^@middlewares/(.*)$': '<rootDir>/src/middlewares/$1',

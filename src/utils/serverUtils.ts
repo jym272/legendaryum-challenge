@@ -1,8 +1,14 @@
 import fs from 'fs';
-import { getEnvOrFail, serverConfigurationParser } from '@utils/index';
+import { getEnvOrFail, serverConfigurationParser, serverConfigurationValidateSchema } from '@utils/index';
 import { Coin, Room, ServerConfiguration } from '@custom-types/index';
 import errors from '@custom-types/errors';
-const { ROOMS_WITH_SAME_NAME, READING_SERVER_CONFIG_FILE, MAX_AMOUNT_COINS, PARSING_SERVER_CONFIG_FILE } = errors;
+const {
+  ROOMS_WITH_SAME_NAME,
+  READING_SERVER_CONFIG_FILE,
+  SCHEMA_NOT_VALID,
+  MAX_AMOUNT_COINS,
+  PARSING_SERVER_CONFIG_FILE
+} = errors;
 // TODO: refactorizar en una clase build design pattern
 
 const checkUniqueRoomNames = (configuration: ServerConfiguration) => {
@@ -24,11 +30,16 @@ export const getServerConfiguration = (configObject: Partial<ServerConfiguration
     } catch (error) {
       throw new Error(READING_SERVER_CONFIG_FILE);
     }
+
     serverConfiguration = serverConfigurationParser(configData);
     if (serverConfiguration === undefined) {
       const error = `${PARSING_SERVER_CONFIG_FILE} ${serverConfigurationParser.message ?? ''}`;
       throw new Error(error);
     }
+  }
+
+  if (!serverConfigurationValidateSchema(serverConfiguration)) {
+    throw new Error(SCHEMA_NOT_VALID + JSON.stringify(serverConfigurationValidateSchema.errors));
   }
 
   checkUniqueRoomNames(serverConfiguration);

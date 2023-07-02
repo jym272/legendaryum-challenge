@@ -8,57 +8,64 @@ import Redis from 'ioredis';
 import { getRedisClient } from '../src/setup';
 import { Session } from '@redis/sessionStore';
 
-describe('disconnection to the server', () => {
-  let httpServer: Server,
-    socket: Socket<ServerToClientsEvents, ClientToServerEvents>,
-    metaverseConfiguration: ServerConfiguration,
-    redisClient: Redis;
-  beforeAll(done => {
-    metaverseConfiguration = {
-      rooms: [
-        {
-          name: 'orangeRoom',
-          area: {
-            x: {
-              max: 10,
-              min: 0
-            },
-            y: {
-              max: 10,
-              min: 0
-            },
-            z: {
-              max: 10,
-              min: 0
-            }
+let redisClient: Redis, metaverseConfiguration: ServerConfiguration;
+beforeAll(done => {
+  metaverseConfiguration = {
+    rooms: [
+      {
+        name: 'orangeRoom',
+        area: {
+          x: {
+            max: 10,
+            min: 0
           },
-          amountOfCoins: 10
+          y: {
+            max: 10,
+            min: 0
+          },
+          z: {
+            max: 10,
+            min: 0
+          }
         },
-        {
-          name: 'blueRoom',
-          area: {
-            x: {
-              max: 0,
-              min: -10
-            },
-            y: {
-              max: 10,
-              min: 0
-            },
-            z: {
-              max: 10,
-              min: 0
-            }
+        amountOfCoins: 10
+      },
+      {
+        name: 'blueRoom',
+        area: {
+          x: {
+            max: 0,
+            min: -10
           },
-          amountOfCoins: 10
-        }
-      ]
-    };
-    redisClient = getRedisClient();
-    redisClient.on('ready', () => {
-      done();
-    });
+          y: {
+            max: 10,
+            min: 0
+          },
+          z: {
+            max: 10,
+            min: 0
+          }
+        },
+        amountOfCoins: 10
+      }
+    ]
+  };
+  redisClient = getRedisClient();
+  redisClient.on('ready', () => {
+    done();
   });
+});
+
+afterAll(done => {
+  void redisClient.quit((err, res) => {
+    if (res === 'OK') {
+      done();
+    }
+  });
+});
+
+describe('disconnection to the server', () => {
+  let httpServer: Server, socket: Socket<ServerToClientsEvents, ClientToServerEvents>;
 
   beforeEach(done => {
     const partialDone = createPartialDone(2, done);
@@ -80,14 +87,6 @@ describe('disconnection to the server', () => {
   afterEach(() => {
     socket.disconnect();
     httpServer.close();
-  });
-
-  afterAll(done => {
-    void redisClient.quit((err, res) => {
-      if (res === 'OK') {
-        done();
-      }
-    });
   });
 
   let sessionId: string;

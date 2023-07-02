@@ -1,5 +1,4 @@
-import { RoomName } from '@custom-types/serverTypes';
-
+export type RoomName = string;
 export interface Coin {
   id: number;
   position: {

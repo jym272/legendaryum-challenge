@@ -1,4 +1,4 @@
-import { Coin, Room, RoomWithRequiredCoins } from '@custom-types/appTypes';
+import { Coin, Room, RoomName, RoomWithRequiredCoins } from '@custom-types/appTypes';
 import { Server } from 'socket.io';
 import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 
@@ -13,7 +13,6 @@ export interface Success<T> {
 
 export type Response<T> = Error | Success<T>;
 
-export type RoomName = string;
 // socket.emit('session', {
 //       sessionID: socket.data.sessionID,
 //       userID: socket.data.userID
