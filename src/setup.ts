@@ -2,23 +2,7 @@ import express from 'express';
 import 'express-async-errors';
 import { addRoutes } from '@routes/index';
 import { initMiddlewares } from '@middlewares/index';
-import Redis from 'ioredis';
-import { getEnvOrFail } from '@utils/env';
-
-let redisClient: Redis | null = null;
-const redisPort = getEnvOrFail('REDIS_PORT');
-const redisHost = getEnvOrFail('REDIS_HOST');
-export const getRedisClient = () => {
-  if (!redisClient) {
-    redisClient = new Redis(Number(redisPort), redisHost);
-    redisClient.on('error', (err: Error) => {
-      if (err.message.includes('ECONNREFUSED')) {
-        throw new Error(`Failed to connect to Redis: ${err.message}`);
-      }
-    });
-  }
-  return redisClient;
-};
+import { getRedisClient } from '@redis/client';
 
 const createServer = (): express.Express => {
   return express();

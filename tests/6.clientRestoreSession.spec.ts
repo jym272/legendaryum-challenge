@@ -11,7 +11,7 @@ import {
   Success
 } from '@custom-types/serverTypes';
 import Redis from 'ioredis';
-import { getRedisClient } from '../src/setup';
+import { getRedisClient } from '@redis/client';
 import { Coin } from '@custom-types/appTypes';
 import { getRemoteSockets } from '@tests/utils/functions';
 

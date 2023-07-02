@@ -1,6 +1,6 @@
 import Redis from 'ioredis';
 import { Coin, Room, RoomName, RoomWithRequiredCoins, ServerConfiguration } from '@custom-types/index';
-import { getRedisClient } from '../setup';
+import { getRedisClient } from '@redis/client';
 
 class ServerStore {
   private redis: Redis;

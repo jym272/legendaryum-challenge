@@ -13,7 +13,7 @@ import {
 import errorsMessages from '@custom-types/errors';
 import { createPartialDone } from '@tests/utils';
 import Redis from 'ioredis';
-import { getRedisClient } from '../src/setup';
+import { getRedisClient } from '@redis/client';
 const { COIN_NOT_FOUND, SOCKET_NOT_IN_ROOM, COIN_NOT_AVAILABLE } = errorsMessages;
 
 let metaverseConfiguration: ServerConfiguration;

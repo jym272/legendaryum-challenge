@@ -10,9 +10,10 @@ import {
 import { AddressInfo } from 'net';
 import Redis from 'ioredis';
 import { createPartialDone } from '@tests/utils';
-import { getRedisClient, initializeSetup, startSetup } from '../../../src/setup';
+import { initializeSetup, startSetup } from '../../../src/setup';
 import { createApplication } from '../../../src/create';
 import { io, Socket } from 'socket.io-client';
+import { getRedisClient } from '@redis/client';
 
 let metaverseConfiguration: ServerConfiguration,
   httpServer: Server,

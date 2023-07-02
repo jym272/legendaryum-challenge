@@ -4,8 +4,7 @@ import { getEnvOrFail } from '@utils/env';
 import fs from 'fs';
 import { serverConfigurationValidateSchema } from '@utils/JSONSchema';
 import { Coin, Room } from '@custom-types/appTypes';
-import { getServerStore } from '@redis/serverStore';
-import { getRedisClient } from '../setup';
+import { getServerStore, getRedisClient } from '@redis/index';
 import { log } from '@utils/logs';
 
 import errors from '@custom-types/errors';

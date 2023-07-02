@@ -4,9 +4,10 @@ import { Room, ServerConfiguration } from '@custom-types/index';
 import { AddressInfo } from 'net';
 import Redis from 'ioredis';
 import { createPartialDone } from '@tests/utils';
-import { getRedisClient, initializeSetup, startSetup } from '../../../src/setup';
+import { initializeSetup, startSetup } from '../../../src/setup';
 import { createApplication } from '../../../src/create';
 import errorsMessages from '@custom-types/errors';
+import { getRedisClient } from '@redis/client';
 const { ROOM_NOT_FOUND } = errorsMessages;
 
 let metaverseConfiguration: ServerConfiguration;

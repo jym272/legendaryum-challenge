@@ -3,9 +3,9 @@ import { createServer, Server } from 'http';
 import { Coin, ServerConfiguration } from '@custom-types/index';
 import { AddressInfo } from 'net';
 import Redis from 'ioredis';
-import { getRedisClient, initializeSetup, startSetup } from '../../../src/setup';
+import { initializeSetup, startSetup } from '../../../src/setup';
 import { createApplication } from '../../../src/create';
-
+import { getRedisClient } from '@redis/client';
 import errorsMessages from '@custom-types/errors';
 import { createPartialDone } from '@tests/utils';
 const { INVALID_COIN_ID, COIN_NOT_FOUND } = errorsMessages;

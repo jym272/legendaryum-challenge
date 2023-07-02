@@ -1,7 +1,6 @@
 import Redis from 'ioredis';
-import { getRedisClient } from '../setup';
 import { RoomName, RoomWithRequiredCoins } from '@custom-types/index';
-import { getServerStore } from '@redis/serverStore';
+import { getServerStore, getRedisClient } from '@redis/index';
 
 export interface Session {
   userID: string;

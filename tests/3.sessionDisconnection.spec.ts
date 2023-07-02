@@ -5,7 +5,7 @@ import { createApplication } from '../src/create';
 import { createPartialDone } from '@tests/utils';
 import { ClientToServerEvents, ServerConfiguration, ServerToClientsEvents } from '@custom-types/serverTypes';
 import Redis from 'ioredis';
-import { getRedisClient } from '../src/setup';
+import { getRedisClient } from '@redis/client';
 import { Session } from '@redis/sessionStore';
 
 let redisClient: Redis, metaverseConfiguration: ServerConfiguration;
