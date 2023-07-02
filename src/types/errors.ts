@@ -10,7 +10,8 @@ const errorsMessages = {
   ROOMS_WITH_SAME_NAME: 'there are rooms with the same name',
   ROOM_DOESNT_HAVE_COINS: "Room doesn't have coins",
   ROOM_NOT_FOUND: 'room not found',
-  NO_USERNAME_PROVIDED: 'no username provided'
+  NO_USERNAME_PROVIDED: 'no username provided',
+  SCHEMA_NOT_VALID: 'schema is not valid'
 };
 
 export default errorsMessages;

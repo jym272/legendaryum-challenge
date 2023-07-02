@@ -3,14 +3,36 @@ import { createApplication } from '../src/create';
 import * as process from 'process';
 import { Server as SocketServer } from 'socket.io';
 import errors from '@custom-types/errors';
-import { ServerConfiguration } from '@custom-types/serverTypes';
 
 import Redis from 'ioredis';
 import { getRedisClient } from '../src/setup';
 
-const { ROOMS_WITH_SAME_NAME, READING_SERVER_CONFIG_FILE, MAX_AMOUNT_COINS, PARSING_SERVER_CONFIG_FILE } = errors;
+const {
+  ROOMS_WITH_SAME_NAME,
+  SCHEMA_NOT_VALID,
+  READING_SERVER_CONFIG_FILE,
+  MAX_AMOUNT_COINS,
+  PARSING_SERVER_CONFIG_FILE
+} = errors;
 
 let httpServer: Server;
+
+let redisClient: Redis;
+
+beforeAll(done => {
+  redisClient = getRedisClient();
+  redisClient.on('ready', () => {
+    done();
+  });
+});
+
+afterAll(done => {
+  void redisClient.quit((err, res) => {
+    if (res === 'OK') {
+      done();
+    }
+  });
+});
 
 describe('empty server configuration, the configuration is read from a file, the redis server is not initialized', () => {
   beforeEach(() => {
@@ -88,66 +110,6 @@ describe('empty server configuration, the configuration is read from a file, the
   });
 });
 describe('create application function, redis server initialized', () => {
-  let metaverseConfiguration: ServerConfiguration, redisClient: Redis;
-
-  beforeAll(done => {
-    metaverseConfiguration = {
-      rooms: [
-        {
-          name: 'orangeRoom',
-          area: {
-            x: {
-              max: 10,
-              min: 0
-            },
-            y: {
-              max: 10,
-              min: 0
-            },
-            z: {
-              max: 10,
-              min: 0
-            }
-          },
-          amountOfCoins: 10
-        },
-        {
-          name: 'blueRoom',
-          area: {
-            x: {
-              max: 0,
-              min: -10
-            },
-            y: {
-              max: 10,
-              min: 0
-            },
-            z: {
-              max: 10,
-              min: 0
-            }
-          },
-          amountOfCoins: 10
-        }
-      ]
-    };
-    redisClient = getRedisClient();
-    // if (redisClient.status === 'close') {
-    //   void redisClient.connect();
-    // }
-    redisClient.on('ready', () => {
-      done();
-    });
-  });
-
-  afterAll(done => {
-    void redisClient.quit((err, res) => {
-      if (res === 'OK') {
-        done();
-      }
-    });
-  });
-
   beforeEach(done => {
     httpServer = createServer();
     void redisClient.flushall(done);
@@ -158,7 +120,50 @@ describe('create application function, redis server initialized', () => {
   });
 
   it('createApplication success, will retrieve the io SocketServer', async () => {
-    const { io } = await createApplication(httpServer, {}, metaverseConfiguration);
+    const { io } = await createApplication(
+      httpServer,
+      {},
+      {
+        rooms: [
+          {
+            name: 'orangeRoom',
+            area: {
+              x: {
+                max: 10,
+                min: 0
+              },
+              y: {
+                max: 10,
+                min: 0
+              },
+              z: {
+                max: 10,
+                min: 0
+              }
+            },
+            amountOfCoins: 10
+          },
+          {
+            name: 'blueRoom',
+            area: {
+              x: {
+                max: 0,
+                min: -10
+              },
+              y: {
+                max: 10,
+                min: 0
+              },
+              z: {
+                max: 10,
+                min: 0
+              }
+            },
+            amountOfCoins: 10
+          }
+        ]
+      }
+    );
     expect(io).toBeInstanceOf(SocketServer);
   });
 
@@ -191,5 +196,100 @@ describe('create application function, redis server initialized', () => {
         }
       );
     }).rejects.toThrowError(MAX_AMOUNT_COINS);
+  });
+
+  describe('JSON schema validation', () => {
+    it('fails because the min amountOfCoins is 1 ', async () => {
+      await expect(async () => {
+        await createApplication(
+          httpServer,
+          {},
+          {
+            rooms: [
+              {
+                name: 'packedRoom',
+                area: {
+                  x: {
+                    max: 5,
+                    min: 0
+                  },
+                  y: {
+                    max: 5,
+                    min: 0
+                  },
+                  z: {
+                    max: 5,
+                    min: 0
+                  }
+                },
+                amountOfCoins: 0
+              }
+            ]
+          }
+        );
+      }).rejects.toThrowError(SCHEMA_NOT_VALID);
+    });
+
+    it('fails because the room has an invalid name room length minLength: 2', async () => {
+      await expect(async () => {
+        await createApplication(
+          httpServer,
+          {},
+          {
+            rooms: [
+              {
+                name: 'A',
+                area: {
+                  x: {
+                    max: 5,
+                    min: 0
+                  },
+                  y: {
+                    max: 5,
+                    min: 0
+                  },
+                  z: {
+                    max: 5,
+                    min: 0
+                  }
+                },
+                amountOfCoins: 20
+              }
+            ]
+          }
+        );
+      }).rejects.toThrowError(SCHEMA_NOT_VALID);
+    });
+
+    it('fails because the room has an invalid name room length maxLength: 20', async () => {
+      await expect(async () => {
+        await createApplication(
+          httpServer,
+          {},
+          {
+            rooms: [
+              {
+                name: 'longNameRoomWithMoreThan20Characters',
+                area: {
+                  x: {
+                    max: 5,
+                    min: 0
+                  },
+                  y: {
+                    max: 5,
+                    min: 0
+                  },
+                  z: {
+                    max: 5,
+                    min: 0
+                  }
+                },
+                amountOfCoins: 0
+              }
+            ]
+          }
+        );
+      }).rejects.toThrowError(SCHEMA_NOT_VALID);
+    });
   });
 });

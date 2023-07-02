@@ -61,24 +61,6 @@ beforeAll(done => {
   });
 });
 
-beforeEach(done => {
-  const partialDone = createPartialDone(2, done);
-  const { server } = initializeSetup();
-  const expressServer = startSetup(server);
-  void redisClient.flushall(partialDone);
-  httpServer = createServer({}, expressServer);
-  void createApplication(httpServer, {}, metaverseConfiguration).then(() => {
-    httpServer.listen(() => {
-      port = (httpServer.address() as AddressInfo).port;
-      partialDone();
-    });
-  });
-});
-
-afterEach(() => {
-  httpServer.close();
-});
-
 afterAll(done => {
   void redisClient.quit((err, res) => {
     if (res === 'OK') {
@@ -88,6 +70,24 @@ afterAll(done => {
 });
 
 describe('/api/room/:room/coins/:id endpoint GET', () => {
+  beforeEach(done => {
+    const partialDone = createPartialDone(2, done);
+    const { server } = initializeSetup();
+    const expressServer = startSetup(server);
+    void redisClient.flushall(partialDone);
+    httpServer = createServer({}, expressServer);
+    void createApplication(httpServer, {}, metaverseConfiguration).then(() => {
+      httpServer.listen(() => {
+        port = (httpServer.address() as AddressInfo).port;
+        partialDone();
+      });
+    });
+  });
+
+  afterEach(() => {
+    httpServer.close();
+  });
+
   it('should return BadRequest with invalid coin id', async () => {
     try {
       await axios.get(`http://localhost:${port}/api/room/skyRoom/coins/invalidId`);
