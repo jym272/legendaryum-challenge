@@ -20,13 +20,6 @@ export const getRedisClient = () => {
   return redisClient;
 };
 
-// export const closeRedisClient = () => {
-//   if (redisClient) {
-//     redisClient.disconnect();
-//     redisClient = null;
-//   }
-// };
-
 const createServer = (): express.Express => {
   return express();
 };
@@ -42,14 +35,14 @@ export const initializeSetup = () => {
 };
 
 // otherwise the cookie will not be sent over https connection
-// const configureServer = (server: express.Express) => {
-//   server.set('trust proxy', true);
-// };
+const configureServer = (server: express.Express) => {
+  server.set('trust proxy', true);
+};
 
 export const startSetup = (server: express.Express) => {
-  // configureServer(server);
+  configureServer(server);
   initMiddlewares(server);
   addRoutes(server);
-  // server.use(commonController.errorHandler);
+  // server.use(commonController.errorHandler); // TODO: add endpoint health etc
   return server;
 };

@@ -8,12 +8,13 @@ import {
   ServerToClientsEvents,
   SocketData
 } from '@custom-types/index';
-import { generateCoins, getServerConfiguration, log } from '@utils/index';
+import { log } from '@utils/index';
 import createRoomHandlers from './roomsHandlers';
 import { getServerStore, getSessionStore } from './redis';
 import * as crypto from 'crypto';
 import errors from '@custom-types/errors';
-const { NO_USERNAME_PROVIDED } = errors;
+const { NO_USERNAME_PROVIDED, SOCKET_SERVER_NOT_INITIALIZED } = errors;
+import { SetUp } from './config/setUp';
 
 function randomId(): string {
   return crypto.randomBytes(8).toString('hex');
@@ -23,15 +24,13 @@ let io: ServerIo | undefined;
 
 export const getSocketServer = () => {
   if (!io) {
-    throw new Error('Socket server not initialized'); //TODO test! cuando testee socket api
+    throw new Error(SOCKET_SERVER_NOT_INITIALIZED);
   }
   return io;
 };
 
 const addMiddlewares = (io: ServerIo) => {
   io.use(async (socket, next) => {
-    // El cliente envía unsa session, significa que ya se conecto antes y envio la sessio que se le envio
-    // si es que tengo la session ya tengo un username y un userID
     const sessionID = socket.handshake.auth.sessionID as string | undefined;
     if (sessionID) {
       const session = await getSessionStore().findSession(sessionID);
@@ -54,41 +53,19 @@ const addMiddlewares = (io: ServerIo) => {
   });
 };
 
-const setUpServerConfiguration = async (serverConfiguration: Partial<ServerConfiguration> = {}) => {
-  // if there is already a server config in db, thats okey, create a env var to force to rebuild the server configuration
-  // better name like build TODO, only if the env var is provided or if there is not a server configuration in db
-  const configuration = getServerConfiguration(serverConfiguration);
-  const serverStore = getServerStore();
-
-  // not anymore validRooom, the query must be done in redisDB TODO: NOW
-  // // later refactor this funciton in a patter design like a build TOD
-  // await storeConfiguration(configuration);
-
-  // TODO: testear estos flujos
-  const storedConfiguration = await serverStore.getServerConfiguration();
-  if (!storedConfiguration || storedConfiguration !== JSON.stringify(configuration)) {
-    // TODO: borrar toda la base de datos primero!, realizar un flush!!!
-    await serverStore.saveConfiguration(configuration); // the configuration saved is withoi the coins
-    generateCoins(configuration);
-    await serverStore.saveServerConfiguration(configuration); // it will save coins also, order is important
-    // log('New server configuration, saving it to Redis');
-    return;
-  }
-  log('Server configuration already stored in Redis');
-};
-
 export async function createApplication(
   httpServer: HttpServer,
   serverOptions: Partial<ServerOptions> = {},
   serverConfiguration: Partial<ServerConfiguration> = {}
 ) {
-  io = new Server<ClientToServerEvents, ServerToClientsEvents, DefaultEventsMap, SocketData>(httpServer, serverOptions);
-
-  await setUpServerConfiguration(serverConfiguration);
-
-  addMiddlewares(io);
-
   const { joinRoom, grabCoin } = createRoomHandlers();
+  // await setUpServerConfiguration(serverConfiguration);
+
+  // const app = new SetUpServer(serverConfiguration);
+  await new SetUp(serverConfiguration).build();
+
+  io = new Server<ClientToServerEvents, ServerToClientsEvents, DefaultEventsMap, SocketData>(httpServer, serverOptions);
+  addMiddlewares(io);
 
   io.on('connection', async socket => {
     socket.on('room:join', joinRoom);
@@ -133,22 +110,6 @@ export async function createApplication(
   io.on('error', err => {
     log('Error', err);
   });
-  // io disconnect
-  io.on('disconnect', () => {
-    log('disconnect');
-  });
-
-  //
-  // io.of('/').adapter.on('create-room', room => {
-  //   log(`room ${room as string} was created`);
-  // });
-  //
-  // io.of('/').adapter.on('join-room', async (room, id) => {
-  //   log(`socket ${id as string} has joined room ${room as string}`);
-  //   // return all Socket instances of the main namespace
-  //   const sockets = await io.fetchSockets();
-  //   log(sockets); // 1
-  // });
 
   return {
     io

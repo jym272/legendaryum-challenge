@@ -23,9 +23,9 @@
       "@controllers/*": ["./src/controllers/*"],
       "@utils/*": ["./src/utils/*"],
       "@redis/*": ["./src/redis/*"],
+      "@sockets/*": ["./src/sockets/*"],
       "@custom-types/*": ["./src/types/*"],
-      "@tests/*": ["./tests/*"],
-      "@events/*": ["./src/events/*"]
+      "@tests/*": ["./tests/*"]
     }
   },
   "include": ["src/**/*", "tests/**/*"],

@@ -1,9 +1,9 @@
 import chalk from 'chalk';
 
-// eslint-disable-next-line no-console
-export const log = console.log;
+export const activateLogging = () => !(process.env.NODE_ENV === 'test' || process.env.CI);
 
-export const activateLogging = () => !(process.env.NODE_ENV === 'test');
+// eslint-disable-next-line no-console,@typescript-eslint/no-empty-function
+export const log = activateLogging() ? console.log : () => {};
 
 export const logServerIsRunning = (port: string) => {
   log('\x1b[32m%s\x1b[0m', `${String.fromCodePoint(0x1f680)} Server is running on port ${port}`);

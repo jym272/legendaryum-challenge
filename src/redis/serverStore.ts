@@ -6,12 +6,10 @@ class ServerStore {
   private redis: Redis;
 
   constructor(redis: Redis) {
-    // Connect to Redis
     this.redis = redis;
   }
 
   async saveConfiguration(config: ServerConfiguration): Promise<void> {
-    // Save server configuration
     await this.redis.set('server:config', JSON.stringify(config));
   }
 
@@ -19,16 +17,7 @@ class ServerStore {
     return this.redis.get('server:config');
   }
 
-  // async getConfiguration(): Promise<ServerConfiguration | null> {
-  //   // Retrieve server configuration
-  //   const configString = await this.redis.get('server:config');
-  //   if (configString) {
-  //     return JSON.parse(configString);
-  //   }
-  //   return null;
-  // }
-
-  async saveServerConfiguration(config: ServerConfiguration) {
+  async persistNewConfiguration(config: ServerConfiguration) {
     const pipeline = this.redis.pipeline();
 
     // Save each room and its coins

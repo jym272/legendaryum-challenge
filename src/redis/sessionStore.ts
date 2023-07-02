@@ -9,7 +9,7 @@ export interface Session {
   connected: boolean;
 }
 
-// TODO: env var
+// TODO: test saveSession and addRoomToSession TLL
 const SESSION_TTL = 24 * 60 * 60;
 
 const mapSession = ([userID, username, connected]: (string | null)[]): Session | undefined =>
@@ -28,8 +28,8 @@ class SessionStore {
   }
 
   async addRoomToSession(id: string, roomName: RoomName): Promise<void> {
-    await this.redisClient.sadd(`session:${id}:rooms`, roomName);
-    //TODO: añadir logica para agregarle el tiempo de expiracion -> es el restante en la session
+    const ttlLeft = await this.redisClient.ttl(`session:${id}`);
+    await this.redisClient.multi().sadd(`session:${id}:rooms`, roomName).expire(`session:${id}:rooms`, ttlLeft).exec();
   }
 
   async getRoomsWithCoins(id: string): Promise<RoomWithRequiredCoins[]> {
@@ -40,7 +40,6 @@ class SessionStore {
     return getServerStore().getRoomsWithCoins(roomNames);
   }
 
-  // TODO some method to join a room
   async saveSession(id: string, { userID, username, connected }: Session) {
     await this.redisClient
       .multi()

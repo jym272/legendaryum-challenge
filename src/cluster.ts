@@ -7,12 +7,10 @@ import { getEnvOrFail } from '@utils/env';
 
 const { server } = initializeSetup();
 const WORKERS_COUNT = Number(getEnvOrFail('WORKERS_COUNT'));
-// const PORT = getEnvOrFail('PORT');
-export let httpServer: http.Server;
 const startMasterProcess = () => {
   log(`Master ${process.pid} is running`);
   const expressServer = startSetup(server);
-  httpServer = http.createServer({}, expressServer);
+  const httpServer = http.createServer({}, expressServer);
   setupMaster(httpServer, {
     loadBalancingMethod: 'least-connection' // either "random", "round-robin" or "least-connection"
   });
@@ -34,5 +32,5 @@ if (cluster.isPrimary) {
   startMasterProcess();
 } else {
   log(`Worker ${process.pid} started`);
-  require('./socket_bis');
+  require('./sockets/server');
 }

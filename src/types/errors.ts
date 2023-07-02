@@ -11,7 +11,8 @@ const errorsMessages = {
   ROOM_DOESNT_HAVE_COINS: "Room doesn't have coins",
   ROOM_NOT_FOUND: 'room not found',
   NO_USERNAME_PROVIDED: 'no username provided',
-  SCHEMA_NOT_VALID: 'schema is not valid'
+  SCHEMA_NOT_VALID: 'schema is not valid',
+  SOCKET_SERVER_NOT_INITIALIZED: 'socket server not initialized'
 };
 
 export default errorsMessages;
