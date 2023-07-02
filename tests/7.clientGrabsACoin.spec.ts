@@ -138,7 +138,7 @@ describe('two users in the orangeRoom', () => {
         });
         anotherSocket = io(`http://localhost:${port}`, {
           auth: {
-            username: 'anotherUser' // TODO: validate same usernames!!
+            username: 'anotherUser'
           },
           transports: ['websocket']
         });

@@ -5,26 +5,10 @@ import { createApplication } from '@config/index';
 import { createPartialDone } from '@tests/utils';
 import { ClientToServerEvents, ServerConfiguration, ServerToClientsEvents } from '@custom-types/serverTypes';
 import Redis from 'ioredis';
-
 import { getRedisClient } from '@redis/client';
 import errors from '@custom-types/errors';
 import { Room } from '@custom-types/appTypes';
 const { NO_USERNAME_PROVIDED } = errors;
-
-// agregar las features al readme, por ejemplo las sessions del cliente
-// los clientes al conectarse neceistan auth con username y room
-// si es el mismo user ya sabemos que se encuentra conectado en cierto cuarto
-// el cuarto es compartido por todos los usuarios que estan en el mismo room
-// en el room hay estrellas, el primer user que toca una estrella la apaga,
-// si otro usuario toca la misma estrella el server le dice que ya esta apagada.
-
-// describir los métodos en socket io que se utilizan para realizar
-// el desafío
-
-// muchas ideas -> configurar el server con el json y luego con el json files
-// darle distribuicion a la probabilidad de que aparezcan las estrellas
-// los test tiene que tener un docker compose con el server de redis totalmente
-// limpio, serguir testeando e implementando funcionalidades y test
 
 let redisClient: Redis, metaverseConfiguration: ServerConfiguration;
 

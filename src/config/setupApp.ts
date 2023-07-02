@@ -17,7 +17,6 @@ const {
 } = errors;
 
 export class SetupApp {
-  isReadFromFile = false;
   serverConfiguration: ServerConfiguration;
 
   constructor(configuration: Partial<ServerConfiguration>) {
@@ -46,7 +45,6 @@ export class SetupApp {
         throw new Error(READING_SERVER_CONFIG_FILE);
       }
       serverConfiguration = this.parseConfigurationFile(configData);
-      this.isReadFromFile = true;
     }
     return serverConfiguration;
   }

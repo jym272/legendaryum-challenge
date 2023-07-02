@@ -27,7 +27,8 @@ export default function () {
 
       const coins = await serverStore.getCoinsByRoomName(room);
       if (coins.length === 0) {
-        return callback({ error: ROOM_DOESNT_HAVE_COINS }); // TODO: no testeado, de seguro con redis cambia algo, limite al menos 1 coin??
+        // TODO: no tested because the validation of the config doesn't allow to create a room without coins
+        return callback({ error: ROOM_DOESNT_HAVE_COINS });
       }
       await sessionStore.addRoomToSession(socket.data.sessionID, room);
       callback({
@@ -52,9 +53,8 @@ export default function () {
       if (!coin.isAvailable) {
         return callback({ error: COIN_NOT_AVAILABLE });
       }
-      await serverStore.grabCoin(roomName, coinID); // TODO: socket.data.username or
-      // socket.data.sessionID -> to know who grabbed the coin
-      // coin.isAvailable = false; //what!!!!
+      await serverStore.grabCoin(roomName, coinID);
+      // TODO  socket.data.username or socket.data.sessionID -> to know who grabbed the coin / coin.isAvailable = false; //what!!!!
       callback();
       socket.to(roomName).emit('coin:grabbed', { coinID, room: roomName });
     }
