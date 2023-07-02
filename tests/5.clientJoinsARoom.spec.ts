@@ -1,7 +1,7 @@
 import { createServer, Server } from 'http';
 import { AddressInfo } from 'net';
 import { io, Socket } from 'socket.io-client';
-import { createApplication } from '../src/create';
+import { createApplication } from '@config/index';
 import {
   ClientToServerEvents,
   Coin,

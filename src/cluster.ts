@@ -2,8 +2,8 @@ import cluster from 'cluster';
 import http from 'http';
 import { setupMaster } from '@socket.io/sticky';
 import { log } from '@utils/logs';
-import { initializeSetup, startSetup } from './setup';
 import { getEnvOrFail } from '@utils/env';
+import { initializeSetup, startSetup } from '@config/setupExpress';
 
 const { server } = initializeSetup();
 const WORKERS_COUNT = Number(getEnvOrFail('WORKERS_COUNT'));

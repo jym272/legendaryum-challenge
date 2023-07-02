@@ -1,7 +1,7 @@
 import { createServer, Server } from 'http';
 import { AddressInfo } from 'net';
 import { io, Socket } from 'socket.io-client';
-import { createApplication } from '../src/create';
+import { createApplication } from '@config/index';
 import { createPartialDone } from '@tests/utils';
 import { ClientToServerEvents, ServerConfiguration, ServerToClientsEvents } from '@custom-types/serverTypes';
 import Redis from 'ioredis';

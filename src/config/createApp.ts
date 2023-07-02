@@ -10,11 +10,11 @@ import {
 } from '@custom-types/index';
 import { log } from '@utils/index';
 import createHandlers from '@sockets/handlers';
-import { getServerStore, getSessionStore } from './redis';
 import errors from '@custom-types/errors';
 const { SOCKET_SERVER_NOT_INITIALIZED } = errors;
-import { Setup } from '@config/setup';
+import { SetupApp } from '@config/setupApp';
 import { addMiddlewares } from '@sockets/middlewares';
+import { getServerStore, getSessionStore } from '@redis/index';
 
 let io: ServerIo | undefined;
 
@@ -31,7 +31,7 @@ export async function createApplication(
   serverConfiguration: Partial<ServerConfiguration> = {}
 ) {
   const { joinRoom, grabCoin } = createHandlers();
-  await new Setup(serverConfiguration).build();
+  await new SetupApp(serverConfiguration).build();
 
   io = new Server<ClientToServerEvents, ServerToClientsEvents, DefaultEventsMap, SocketData>(httpServer, serverOptions);
   addMiddlewares(io);
