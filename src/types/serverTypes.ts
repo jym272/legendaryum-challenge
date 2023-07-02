@@ -1,5 +1,5 @@
 import { Coin, Room, RoomName, RoomWithRequiredCoins } from '@custom-types/appTypes';
-import { Server } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 
 export interface Error {
@@ -48,3 +48,4 @@ export interface RemoteSocketData {
 }
 
 export type ServerIo = Server<ClientToServerEvents, ServerToClientsEvents, DefaultEventsMap, SocketData>;
+export type SocketIo = Socket<ClientToServerEvents, ServerToClientsEvents, DefaultEventsMap, SocketData>;

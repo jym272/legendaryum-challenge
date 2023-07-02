@@ -16,7 +16,7 @@ const {
   PARSING_SERVER_CONFIG_FILE
 } = errors;
 
-export class SetUp {
+export class Setup {
   isReadFromFile = false;
   serverConfiguration: ServerConfiguration;
 

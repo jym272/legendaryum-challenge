@@ -15,7 +15,8 @@
       "@redis/*": ["./src/redis/*"],
       "@custom-types/*": ["./src/types/*"],
       "@sockets/*": ["./src/sockets/*"],
-      "@tests/*": ["./tests/*"]
+      "@tests/*": ["./tests/*"],
+      "@config/*": ["./src/config/*"]
     },
     "baseUrl": "."
   },

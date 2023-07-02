@@ -14,6 +14,7 @@ module.exports = {
     '^@sockets/(.*)$': '<rootDir>/src/sockets/$1',
     '^@redis/(.*)$': '<rootDir>/src/redis/$1',
     '^@custom-types/(.*)$': '<rootDir>/src/types/$1',
-    '^@tests/(.*)$': '<rootDir>/tests/$1'
+    '^@tests/(.*)$': '<rootDir>/tests/$1',
+    '^@config/(.*)$': '<rootDir>/src/config/$1'
   }
 };

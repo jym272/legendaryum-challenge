@@ -9,16 +9,12 @@ import {
   SocketData
 } from '@custom-types/index';
 import { log } from '@utils/index';
-import createRoomHandlers from './roomsHandlers';
+import createHandlers from '@sockets/handlers';
 import { getServerStore, getSessionStore } from './redis';
-import * as crypto from 'crypto';
 import errors from '@custom-types/errors';
-const { NO_USERNAME_PROVIDED, SOCKET_SERVER_NOT_INITIALIZED } = errors;
-import { SetUp } from './config/setUp';
-
-function randomId(): string {
-  return crypto.randomBytes(8).toString('hex');
-}
+const { SOCKET_SERVER_NOT_INITIALIZED } = errors;
+import { Setup } from '@config/setup';
+import { addMiddlewares } from '@sockets/middlewares';
 
 let io: ServerIo | undefined;
 
@@ -29,40 +25,13 @@ export const getSocketServer = () => {
   return io;
 };
 
-const addMiddlewares = (io: ServerIo) => {
-  io.use(async (socket, next) => {
-    const sessionID = socket.handshake.auth.sessionID as string | undefined;
-    if (sessionID) {
-      const session = await getSessionStore().findSession(sessionID);
-      if (session) {
-        socket.data.sessionID = sessionID;
-        socket.data.userID = session.userID;
-        socket.data.username = session.username;
-        return next();
-      }
-    }
-    const username = socket.handshake.auth.username as string | undefined;
-
-    if (!username) {
-      return next(new Error(NO_USERNAME_PROVIDED));
-    }
-    socket.data.sessionID = randomId();
-    socket.data.userID = randomId();
-    socket.data.username = username;
-    next();
-  });
-};
-
 export async function createApplication(
   httpServer: HttpServer,
   serverOptions: Partial<ServerOptions> = {},
   serverConfiguration: Partial<ServerConfiguration> = {}
 ) {
-  const { joinRoom, grabCoin } = createRoomHandlers();
-  // await setUpServerConfiguration(serverConfiguration);
-
-  // const app = new SetUpServer(serverConfiguration);
-  await new SetUp(serverConfiguration).build();
+  const { joinRoom, grabCoin } = createHandlers();
+  await new Setup(serverConfiguration).build();
 
   io = new Server<ClientToServerEvents, ServerToClientsEvents, DefaultEventsMap, SocketData>(httpServer, serverOptions);
   addMiddlewares(io);

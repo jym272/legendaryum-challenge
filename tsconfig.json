@@ -25,7 +25,8 @@
       "@redis/*": ["./src/redis/*"],
       "@sockets/*": ["./src/sockets/*"],
       "@custom-types/*": ["./src/types/*"],
-      "@tests/*": ["./tests/*"]
+      "@tests/*": ["./tests/*"],
+      "@config/*": ["./src/config/*"]
     }
   },
   "include": ["src/**/*", "tests/**/*"],
