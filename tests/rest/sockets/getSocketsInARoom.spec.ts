@@ -9,7 +9,7 @@ import {
 } from '@custom-types/index';
 import { AddressInfo } from 'net';
 import Redis from 'ioredis';
-import { createPartialDone } from '@utils/testUtils';
+import { createPartialDone } from '@tests/utils';
 import { getRedisClient, initializeSetup, startSetup } from '../../../src/setup';
 import { createApplication } from '../../../src/create';
 import { io, Socket } from 'socket.io-client';

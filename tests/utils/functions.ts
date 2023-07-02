@@ -9,3 +9,12 @@ export const getRemoteSockets = async (socketServer: ServerIo): Promise<RemoteSo
     };
   });
 };
+
+export const createPartialDone = (count: number, done: () => void) => {
+  let i = 0;
+  return () => {
+    if (++i === count) {
+      done();
+    }
+  };
+};

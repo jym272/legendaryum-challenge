@@ -13,7 +13,7 @@ import {
 } from '@custom-types/index';
 import errorsMessages from '@custom-types/errors';
 import Redis from 'ioredis';
-import { createPartialDone } from '@utils/testUtils';
+import { createPartialDone } from '@tests/utils';
 import { getRedisClient } from '../src/setup';
 import { getRemoteSockets } from '@tests/utils';
 const { INVALID_ROOM } = errorsMessages;

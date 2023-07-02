@@ -3,7 +3,7 @@ import { createServer, Server } from 'http';
 import { Room, ServerConfiguration } from '@custom-types/index';
 import { AddressInfo } from 'net';
 import Redis from 'ioredis';
-import { createPartialDone } from '@utils/testUtils';
+import { createPartialDone } from '@tests/utils';
 import { getRedisClient, initializeSetup, startSetup } from '../../../src/setup';
 import { createApplication } from '../../../src/create';
 import errorsMessages from '@custom-types/errors';

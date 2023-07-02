@@ -11,7 +11,7 @@ import {
   Success
 } from '@custom-types/index';
 import errorsMessages from '@custom-types/errors';
-import { createPartialDone } from '@utils/testUtils';
+import { createPartialDone } from '@tests/utils';
 import Redis from 'ioredis';
 import { getRedisClient } from '../src/setup';
 const { COIN_NOT_FOUND, SOCKET_NOT_IN_ROOM, COIN_NOT_AVAILABLE } = errorsMessages;
