@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { getEnvOrFail, log, serverConfigurationParser, serverConfigurationValidateSchema } from '@utils/index';
+import { getEnvOrFail, serverConfigurationParser, serverConfigurationValidateSchema } from '@utils/index';
 import { Coin, Room, ServerConfiguration } from '@custom-types/index';
 import errors from '@custom-types/errors';
 const {
@@ -39,8 +39,7 @@ export const getServerConfiguration = (configObject: Partial<ServerConfiguration
   }
 
   if (!serverConfigurationValidateSchema(serverConfiguration)) {
-    log(serverConfigurationValidateSchema.errors);
-    throw new Error(SCHEMA_NOT_VALID);
+    throw new Error(SCHEMA_NOT_VALID + JSON.stringify(serverConfigurationValidateSchema.errors));
   }
 
   checkUniqueRoomNames(serverConfiguration);

@@ -227,7 +227,7 @@ describe('create application function, redis server initialized', () => {
             ]
           }
         );
-      }).rejects.toThrowError(SCHEMA_NOT_VALID);
+      }).rejects.toThrowError(new RegExp(SCHEMA_NOT_VALID));
     });
 
     it('fails because the room has an invalid name room length minLength: 2', async () => {
@@ -258,7 +258,7 @@ describe('create application function, redis server initialized', () => {
             ]
           }
         );
-      }).rejects.toThrowError(SCHEMA_NOT_VALID);
+      }).rejects.toThrowError(new RegExp(SCHEMA_NOT_VALID));
     });
 
     it('fails because the room has an invalid name room length maxLength: 20', async () => {
@@ -289,7 +289,7 @@ describe('create application function, redis server initialized', () => {
             ]
           }
         );
-      }).rejects.toThrowError(SCHEMA_NOT_VALID);
+      }).rejects.toThrowError(new RegExp(SCHEMA_NOT_VALID));
     });
   });
 });
