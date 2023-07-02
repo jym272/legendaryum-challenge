@@ -3,11 +3,10 @@ import { createServer, Server } from 'http';
 import { Coin, ServerConfiguration } from '@custom-types/index';
 import { AddressInfo } from 'net';
 import Redis from 'ioredis';
-import { createPartialDone } from '@utils/testUtils';
-import { getRedisClient, initializeSetup, startSetup } from '../../../src/setup';
-import { createApplication } from '../../../src/create';
-
+import { initializeSetup, startSetup, createApplication } from '@config/index';
+import { getRedisClient } from '@redis/client';
 import errorsMessages from '@custom-types/errors';
+import { createPartialDone } from '@tests/utils';
 const { INVALID_COIN_ID, COIN_NOT_FOUND } = errorsMessages;
 
 let metaverseConfiguration: ServerConfiguration;

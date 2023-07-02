@@ -1,7 +1,7 @@
 import { createServer, Server } from 'http';
 import { AddressInfo } from 'net';
 import { io, Socket } from 'socket.io-client';
-import { createApplication } from '../src/create';
+import { createApplication } from '@config/index';
 import {
   ClientToServerEvents,
   Coin,
@@ -11,9 +11,9 @@ import {
   Success
 } from '@custom-types/index';
 import errorsMessages from '@custom-types/errors';
-import { createPartialDone } from '@utils/testUtils';
+import { createPartialDone } from '@tests/utils';
 import Redis from 'ioredis';
-import { getRedisClient } from '../src/setup';
+import { getRedisClient } from '@redis/client';
 const { COIN_NOT_FOUND, SOCKET_NOT_IN_ROOM, COIN_NOT_AVAILABLE } = errorsMessages;
 
 let metaverseConfiguration: ServerConfiguration;
@@ -138,7 +138,7 @@ describe('two users in the orangeRoom', () => {
         });
         anotherSocket = io(`http://localhost:${port}`, {
           auth: {
-            username: 'anotherUser' // TODO: validate same usernames!!
+            username: 'anotherUser'
           },
           transports: ['websocket']
         });

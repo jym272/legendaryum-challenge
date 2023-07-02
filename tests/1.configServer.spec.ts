@@ -1,11 +1,11 @@
 import { createServer, Server } from 'http';
-import { createApplication } from '../src/create';
+import { createApplication } from '@config/index';
 import * as process from 'process';
 import { Server as SocketServer } from 'socket.io';
 import errors from '@custom-types/errors';
 
 import Redis from 'ioredis';
-import { getRedisClient } from '../src/setup';
+import { getRedisClient } from '@redis/client';
 
 const {
   ROOMS_WITH_SAME_NAME,

@@ -14,8 +14,9 @@
       "@utils/*": ["./src/utils/*"],
       "@redis/*": ["./src/redis/*"],
       "@custom-types/*": ["./src/types/*"],
+      "@sockets/*": ["./src/sockets/*"],
       "@tests/*": ["./tests/*"],
-      "@events/*": ["./src/events/*"],
+      "@config/*": ["./src/config/*"]
     },
     "baseUrl": "."
   },

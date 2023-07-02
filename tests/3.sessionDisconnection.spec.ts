@@ -1,11 +1,11 @@
 import { createServer, Server } from 'http';
 import { AddressInfo } from 'net';
 import { io, Socket } from 'socket.io-client';
-import { createApplication } from '../src/create';
-import { createPartialDone } from '@utils/testUtils';
+import { createApplication } from '@config/index';
+import { createPartialDone } from '@tests/utils';
 import { ClientToServerEvents, ServerConfiguration, ServerToClientsEvents } from '@custom-types/serverTypes';
 import Redis from 'ioredis';
-import { getRedisClient } from '../src/setup';
+import { getRedisClient } from '@redis/client';
 import { Session } from '@redis/sessionStore';
 
 let redisClient: Redis, metaverseConfiguration: ServerConfiguration;

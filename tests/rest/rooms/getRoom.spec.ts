@@ -3,10 +3,10 @@ import { createServer, Server } from 'http';
 import { Room, ServerConfiguration } from '@custom-types/index';
 import { AddressInfo } from 'net';
 import Redis from 'ioredis';
-import { createPartialDone } from '@utils/testUtils';
-import { getRedisClient, initializeSetup, startSetup } from '../../../src/setup';
-import { createApplication } from '../../../src/create';
+import { createPartialDone } from '@tests/utils';
+import { initializeSetup, startSetup, createApplication } from '@config/index';
 import errorsMessages from '@custom-types/errors';
+import { getRedisClient } from '@redis/client';
 const { ROOM_NOT_FOUND } = errorsMessages;
 
 let metaverseConfiguration: ServerConfiguration;

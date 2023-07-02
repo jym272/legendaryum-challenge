@@ -3,9 +3,9 @@ import { createServer, Server } from 'http';
 import { Coin, ServerConfiguration } from '@custom-types/index';
 import { AddressInfo } from 'net';
 import Redis from 'ioredis';
-import { createPartialDone } from '@utils/testUtils';
-import { getRedisClient, initializeSetup, startSetup } from '../../../src/setup';
-import { createApplication } from '../../../src/create';
+import { createPartialDone } from '@tests/utils';
+import { initializeSetup, startSetup, createApplication } from '@config/index';
+import { getRedisClient } from '@redis/client';
 
 let metaverseConfiguration: ServerConfiguration;
 let httpServer: Server, port: number;

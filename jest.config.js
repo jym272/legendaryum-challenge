@@ -2,6 +2,7 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
+  testPathIgnorePatterns: ['/node_modules/', '/dist/'],
 
   // transform: {
   //   '^.+\\.tsx?$': ['ts-jest', { isolatedModules: true }]
@@ -11,10 +12,10 @@ module.exports = {
     '^@middlewares/(.*)$': '<rootDir>/src/middlewares/$1',
     '^@controllers/(.*)$': '<rootDir>/src/controllers/$1',
     '^@utils/(.*)$': '<rootDir>/src/utils/$1',
-    '^@db/(.*)$': '<rootDir>/src/db/$1',
+    '^@sockets/(.*)$': '<rootDir>/src/sockets/$1',
     '^@redis/(.*)$': '<rootDir>/src/redis/$1',
     '^@custom-types/(.*)$': '<rootDir>/src/types/$1',
     '^@tests/(.*)$': '<rootDir>/tests/$1',
-    '^@events/(.*)$': '<rootDir>/src/events/$1'
+    '^@config/(.*)$': '<rootDir>/src/config/$1'
   }
 };

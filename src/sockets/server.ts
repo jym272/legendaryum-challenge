@@ -4,8 +4,7 @@ import { setupWorker } from '@socket.io/sticky';
 import { createAdapter } from '@socket.io/redis-adapter';
 import { log, logServerIsRunning } from '@utils/logs';
 import { getEnvOrFail } from '@utils/env';
-import { initializeSetup, startSetup } from './setup';
-import { createApplication } from './create';
+import { initializeSetup, startSetup, createApplication } from '@config/index';
 
 log(`hello, I am the process with PID: ${process.pid} and I am a worker`);
 
@@ -26,6 +25,3 @@ void (async () => {
   httpServer.listen(PORT, () => logServerIsRunning(PORT));
   setupWorker(io);
 })();
-
-// export io
-// export { io };

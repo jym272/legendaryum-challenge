@@ -1,15 +1,12 @@
-import { Socket } from 'socket.io';
-import { ClientToServerEvents, Coin, Response, RoomName, ServerToClientsEvents, SocketData } from '@custom-types/index';
+import { Coin, Response, RoomName, SocketIo } from '@custom-types/index';
 import errorsMessages from '@custom-types/errors';
-import { getServerStore, getSessionStore } from './redis';
-import { DefaultEventsMap } from 'socket.io/dist/typed-events';
+import { getServerStore, getSessionStore } from '@redis/index';
 const { ROOM_DOESNT_HAVE_COINS, SOCKET_NOT_IN_ROOM, COIN_NOT_AVAILABLE, INVALID_ROOM, COIN_NOT_FOUND } = errorsMessages;
 
-type SocketIO = Socket<ClientToServerEvents, ServerToClientsEvents, DefaultEventsMap, SocketData>;
 export default function () {
   return {
     joinRoom: async function (room: string, callback: (res?: Response<Coin[]>) => void) {
-      const socket = this as unknown as SocketIO;
+      const socket = this as unknown as SocketIo;
       const serverStore = getServerStore();
       const sessionStore = getSessionStore();
 
@@ -30,7 +27,8 @@ export default function () {
 
       const coins = await serverStore.getCoinsByRoomName(room);
       if (coins.length === 0) {
-        return callback({ error: ROOM_DOESNT_HAVE_COINS }); // TODO: no testeado, de seguro con redis cambia algo, limite al menos 1 coin??
+        // TODO: no tested because the validation of the config doesn't allow to create a room without coins
+        return callback({ error: ROOM_DOESNT_HAVE_COINS });
       }
       await sessionStore.addRoomToSession(socket.data.sessionID, room);
       callback({
@@ -42,7 +40,7 @@ export default function () {
       { coinID, room: roomName }: { coinID: number; room: RoomName },
       callback: (res?: Response<void>) => void
     ) {
-      const socket = this as unknown as Socket<ClientToServerEvents, ServerToClientsEvents>;
+      const socket = this as unknown as SocketIo;
       const serverStore = getServerStore();
       if (!socket.rooms.has(roomName)) {
         return callback({ error: SOCKET_NOT_IN_ROOM });
@@ -55,9 +53,8 @@ export default function () {
       if (!coin.isAvailable) {
         return callback({ error: COIN_NOT_AVAILABLE });
       }
-      await serverStore.grabCoin(roomName, coinID); // TODO: socket.data.username or
-      // socket.data.sessionID -> to know who grabbed the coin
-      // coin.isAvailable = false; //what!!!!
+      await serverStore.grabCoin(roomName, coinID);
+      // TODO  socket.data.username or socket.data.sessionID -> to know who grabbed the coin / coin.isAvailable = false; //what!!!!
       callback();
       socket.to(roomName).emit('coin:grabbed', { coinID, room: roomName });
     }
