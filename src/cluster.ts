@@ -15,7 +15,25 @@ const startMasterProcess = () => {
     loadBalancingMethod: 'least-connection' // either "random", "round-robin" or "least-connection"
   });
 
-  // httpServer.listen(PORT, () => logServerIsRunning(PORT));
+  // httpServer.listen(PORT, () => logServerIsRunning(PORT)); ///asd aname: pull_request_to_dev
+  //
+  // on:
+  //   pull_request:
+  //     types: [opened, synchronize, reopened]
+  //     paths:
+  //       - 'src/**'
+  //       - 'tests/**'
+  //     branches:
+  //       - dev
+  //
+  // concurrency:
+  //   group: ${{ github.workflow }}-${{ github.ref }}
+  //   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+  //
+  // jobs:
+  //   code_quality_check:
+  //     uses: ./.github/workflows/code-quality-check.yml
+  //     secrets: inheritsd
 
   for (let i = 0; i < WORKERS_COUNT; i++) {
     cluster.fork();
