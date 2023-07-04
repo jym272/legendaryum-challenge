@@ -6,6 +6,8 @@ on:
     paths:
       - 'src/**'
       - 'tests/**'
+    branches:
+      - master
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
